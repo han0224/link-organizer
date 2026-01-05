@@ -1,18 +1,23 @@
 // app/_layout.tsx
 import { Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 export default function RootLayout() {
   return (
-    <Stack>
-      <Stack.Screen name="index" options={{ title: "내 링크" }} />
-      <Stack.Screen
-        name="add-link"
-        options={{
-          title: "링크 추가",
-          presentation: "modal",
-        }}
-      />
-      <Stack.Screen name="link/[id]" options={{ title: "링크 상세" }} />
-    </Stack>
+    <SafeAreaProvider>
+      <StatusBar style="dark" />
+      <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+          }}
+        >
+          <Stack.Screen name="index" />
+          <Stack.Screen name="add-link" options={{ presentation: "modal" }} />
+          <Stack.Screen name="link/[id]" />
+        </Stack>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }

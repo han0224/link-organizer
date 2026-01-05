@@ -30,7 +30,7 @@ export default function AddLinkScreen() {
   const [tags, setTags] = useState<string[]>([]);
   const [memo, setMemo] = useState("");
   const [loading, setLoading] = useState(false);
-
+  const [thumbnail, setThumbnail] = useState<string | undefined>(undefined);
   // useEffect 수정
   useEffect(() => {
     if (editId) {
@@ -55,6 +55,7 @@ export default function AddLinkScreen() {
       setType(existing.type);
       setTags(existing.tags);
       setMemo(existing.memo);
+      setThumbnail(existing.thumbnail);
     }
   };
 
@@ -64,6 +65,8 @@ export default function AddLinkScreen() {
     setType(detectedType);
 
     const metadata = await fetchLinkMetadata(inputUrl);
+    console.log(metadata);
+    setThumbnail(metadata.thumbnail);
     setTitle(metadata.title);
     setLoading(false);
   };
@@ -77,6 +80,7 @@ export default function AddLinkScreen() {
       type,
       tags,
       memo,
+      thumbnail,
       createdAt: editId ? new Date() : new Date(), // 수정 시에도 일단 현재 시간
       updatedAt: new Date(),
     };
@@ -156,4 +160,11 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   saveButtonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  thumbnail: {
+    width: "100%",
+    height: 200,
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+  thumbnailText: { color: "#fff", fontSize: 16, fontWeight: "600" },
 });

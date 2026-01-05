@@ -1,5 +1,11 @@
 // components/LinkCard.tsx
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  ImageBackground,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { Link } from "../types";
 
 interface Props {
@@ -18,26 +24,39 @@ const TYPE_COLORS: Record<string, string> = {
 export default function LinkCard({ link, onPress }: Props) {
   return (
     <TouchableOpacity style={styles.card} onPress={onPress}>
-      <View
-        style={[styles.typeBadge, { backgroundColor: TYPE_COLORS[link.type] }]}
-      >
-        <Text style={styles.typeText}>{link.type}</Text>
-      </View>
-      <Text style={styles.title} numberOfLines={2}>
-        {link.title}
-      </Text>
-      <Text style={styles.url} numberOfLines={1}>
-        {link.url}
-      </Text>
-      {link.tags.length > 0 && (
-        <View style={styles.tags}>
-          {link.tags.map((tag, i) => (
-            <View key={i} style={styles.tag}>
-              <Text style={styles.tagText}>#{tag}</Text>
-            </View>
-          ))}
+      <View>
+        <View
+          style={[
+            styles.typeBadge,
+            { backgroundColor: TYPE_COLORS[link.type] },
+          ]}
+        >
+          <Text style={styles.typeText}>{link.type}</Text>
         </View>
-      )}
+        <Text style={styles.title} numberOfLines={2}>
+          {link.title}
+        </Text>
+        <Text style={styles.url} numberOfLines={1}>
+          {link.url}
+        </Text>
+        {link.tags.length > 0 && (
+          <View style={styles.tags}>
+            {link.tags.map((tag, i) => (
+              <View key={i} style={styles.tag}>
+                <Text style={styles.tagText}>#{tag}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+        <View>
+          {link.thumbnail && (
+            <ImageBackground
+              source={{ uri: link.thumbnail }}
+              style={styles.thumbnail}
+            />
+          )}
+        </View>
+      </View>
     </TouchableOpacity>
   );
 }
@@ -72,4 +91,10 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   tagText: { fontSize: 12, color: "#666" },
+  thumbnail: {
+    width: "100%",
+    height: 200,
+    borderRadius: 8,
+    overflow: "hidden",
+  },
 });

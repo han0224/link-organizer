@@ -1,4 +1,5 @@
 // app/index.tsx
+import { Icon } from "@/components/ui/icon/icon";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
@@ -8,15 +9,18 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import LinkCard from "../components/link-card";
+import SearchBar from "../components/search-bar";
+import SearchResultCard from "../components/search-result-card";
 import { Link } from "../types";
+import { SearchFilter, searchLinks, SearchResult } from "../utils/search";
 import { getLinks } from "../utils/storage";
 
 export default function HomeScreen() {
   const [links, setLinks] = useState<Link[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchFilter, setSearchFilter] = useState<SearchFilter>("all");
   const router = useRouter();
 
-  // 화면에 돌아올 때마다 새로고침
   useFocusEffect(
     useCallback(() => {
       loadLinks();
@@ -28,8 +32,29 @@ export default function HomeScreen() {
     setLinks(data);
   };
 
+  // 검색 결과
+  const searchResults: SearchResult[] = searchLinks(
+    links,
+    searchQuery,
+    searchFilter
+  );
+
+  const isSearching = searchQuery.length > 0;
+
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <SearchBar
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          filter={searchFilter}
+          onFilterChange={setSearchFilter}
+        />
+        <TouchableOpacity style={styles.hamburgerIcon}>
+          <Icon name="hamburger" size={32} />
+        </TouchableOpacity>
+      </View>
+
       {links.length === 0 ? (
         <View style={styles.empty}>
           <Text style={styles.emptyText}>저장된 링크가 없습니다</Text>
@@ -37,21 +62,35 @@ export default function HomeScreen() {
             + 버튼을 눌러 링크를 추가하세요
           </Text>
         </View>
+      ) : searchResults.length === 0 ? (
+        <View style={styles.empty}>
+          <Text style={styles.emptyText}>검색 결과가 없습니다</Text>
+          <Text style={styles.emptySubtext}>다른 검색어를 입력해보세요</Text>
+        </View>
       ) : (
-        <FlatList
-          data={links}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <LinkCard
-              link={item}
-              onPress={() => router.push(`/link/${item.id}`)}
-            />
+        <>
+          {isSearching && (
+            <View style={styles.resultCount}>
+              <Text style={styles.resultCountText}>
+                {searchResults.length}개의 결과
+              </Text>
+            </View>
           )}
-          contentContainerStyle={styles.list}
-        />
+          <FlatList
+            data={searchResults}
+            keyExtractor={(item) => item.link.id}
+            renderItem={({ item }) => (
+              <SearchResultCard
+                result={item}
+                query={searchQuery}
+                onPress={() => router.push(`/link/${item.link.id}`)}
+              />
+            )}
+            contentContainerStyle={styles.list}
+          />
+        </>
       )}
 
-      {/* 추가 버튼 */}
       <TouchableOpacity
         style={styles.fab}
         onPress={() => router.push("/add-link")}
@@ -63,11 +102,54 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f5f5f5" },
-  list: { padding: 16, paddingBottom: 80 },
-  empty: { flex: 1, justifyContent: "center", alignItems: "center" },
-  emptyText: { fontSize: 18, color: "#666" },
-  emptySubtext: { fontSize: 14, color: "#999", marginTop: 8 },
+  container: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+  },
+  header: {
+    height: 105,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 8,
+    backgroundColor: "white",
+    flexDirection: "row",
+    alignItems: "flex-start",
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+    gap: 4,
+  },
+  hamburgerIcon: {
+    height: "50%",
+    justifyContent: "center",
+    alignItems: "center",
+    // padding: 12,
+  },
+  list: {
+    padding: 16,
+    paddingBottom: 80,
+  },
+  empty: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyText: {
+    fontSize: 18,
+    color: "#666",
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: "#999",
+    marginTop: 8,
+  },
+  resultCount: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+  },
+  resultCountText: {
+    fontSize: 13,
+    color: "#666",
+  },
   fab: {
     position: "absolute",
     right: 20,

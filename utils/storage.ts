@@ -27,3 +27,13 @@ export async function deleteLink(id: string): Promise<void> {
   const filtered = links.filter((l) => l.id !== id);
   await AsyncStorage.setItem(LINKS_KEY, JSON.stringify(filtered));
 }
+
+export async function getAllTags(): Promise<string[]> {
+  const links = await getLinks();
+  const tagSet = new Set<string>();
+
+  links.forEach((link) => {
+    link.tags.forEach((tag) => tagSet.add(tag));
+  });
+  return Array.from(tagSet).sort();
+}
