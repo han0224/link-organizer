@@ -1,4 +1,6 @@
 // app/add-link.tsx
+import FolderSelector from "@/components/folder-selector";
+import { DEFAULT_FOLDER } from "@/constants";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -25,6 +27,7 @@ export default function AddLinkScreen() {
   const router = useRouter();
 
   const [url, setUrl] = useState(sharedUrl || "");
+  const [folder, setFolder] = useState(DEFAULT_FOLDER);
   const [title, setTitle] = useState("");
   const [type, setType] = useState<LinkType>("other");
   const [tags, setTags] = useState<string[]>([]);
@@ -83,6 +86,7 @@ export default function AddLinkScreen() {
       thumbnail,
       createdAt: editId ? new Date() : new Date(), // 수정 시에도 일단 현재 시간
       updatedAt: new Date(),
+      folder,
     };
 
     await saveLink(link);
@@ -115,7 +119,9 @@ export default function AddLinkScreen() {
       <View style={styles.field}>
         <Text style={styles.label}>타입: {type}</Text>
       </View>
-
+      <View style={styles.field}>
+        <FolderSelector selectedFolder={folder} onSelectFolder={setFolder} />
+      </View>
       <View style={styles.field}>
         <Text style={styles.label}>태그</Text>
         <TagInput tags={tags} onTagsChange={setTags} />

@@ -11,4 +11,5 @@ export interface Link {
   thumbnail?: string;
   createdAt: Date;
   updatedAt: Date;
+  folder: string;
 }

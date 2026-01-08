@@ -1,6 +1,8 @@
 // app/index.tsx
-import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { Link } from "@/types";
+import { SearchFilter, searchLinks, SearchResult } from "@/utils/search";
+import { useRouter } from "expo-router";
+import { useState } from "react";
 import {
   FlatList,
   StyleSheet,
@@ -8,28 +10,32 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import SearchBar from "../components/search-bar";
-import SearchResultCard from "../components/search-result-card";
-import { Link } from "../types";
-import { SearchFilter, searchLinks, SearchResult } from "../utils/search";
-import { getLinks } from "../utils/storage";
+import SearchBar from "./search-bar";
+import SearchResultCard from "./search-result-card";
 
-export default function HomeScreen() {
-  const [links, setLinks] = useState<Link[]>([]);
+export default function LinkList({
+  links,
+  isSearchToggle = false,
+}: {
+  links: Link[];
+  isSearchToggle?: boolean;
+}) {
+  const [isSearchOpen, setIsSearchOpen] = useState(!isSearchToggle);
+  const [visibleLinks, setVisibleLinks] = useState<Link[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFilter, setSearchFilter] = useState<SearchFilter>("all");
   const router = useRouter();
 
-  useFocusEffect(
-    useCallback(() => {
-      loadLinks();
-    }, [])
-  );
+  //   useFocusEffect(
+  //     useCallback(() => {
+  //       loadLinks();
+  //     }, [])
+  //   );
 
-  const loadLinks = async () => {
-    const data = await getLinks();
-    setLinks(data);
-  };
+  //   const loadLinks = async () => {
+  //     const data = await getLinks();
+  //     setLinks(data);
+  //   };
 
   // 검색 결과
   const searchResults: SearchResult[] = searchLinks(
@@ -42,16 +48,13 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <View>
+      <View style={styles.header}>
         <SearchBar
           value={searchQuery}
           onChangeText={setSearchQuery}
           filter={searchFilter}
           onFilterChange={setSearchFilter}
         />
-        {/* <TouchableOpacity style={styles.hamburgerIcon}>
-          <Icon name="hamburger" size={32} />
-        </TouchableOpacity> */}
       </View>
 
       {links.length === 0 ? (
