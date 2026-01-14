@@ -1,4 +1,5 @@
 // components/TagInput.tsx
+import { getAllTags } from "@/storage/link-storage";
 import { useEffect, useState } from "react";
 import {
   ScrollView,
@@ -8,7 +9,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { getAllTags } from "../utils/storage";
 
 interface Props {
   tags: string[];

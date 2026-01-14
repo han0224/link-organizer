@@ -1,5 +1,5 @@
 // app/index.tsx
-import { Link } from "@/types";
+import { LinkSchema } from "@/storage/link-schema";
 import { SearchFilter, searchLinks, SearchResult } from "@/utils/search";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -10,32 +10,12 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import SearchBar from "./search-bar";
 import SearchResultCard from "./search-result-card";
 
-export default function LinkList({
-  links,
-  isSearchToggle = false,
-}: {
-  links: Link[];
-  isSearchToggle?: boolean;
-}) {
-  const [isSearchOpen, setIsSearchOpen] = useState(!isSearchToggle);
-  const [visibleLinks, setVisibleLinks] = useState<Link[]>([]);
+export default function LinkList({ links }: { links: LinkSchema[] }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFilter, setSearchFilter] = useState<SearchFilter>("all");
   const router = useRouter();
-
-  //   useFocusEffect(
-  //     useCallback(() => {
-  //       loadLinks();
-  //     }, [])
-  //   );
-
-  //   const loadLinks = async () => {
-  //     const data = await getLinks();
-  //     setLinks(data);
-  //   };
 
   // 검색 결과
   const searchResults: SearchResult[] = searchLinks(
@@ -48,15 +28,6 @@ export default function LinkList({
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <SearchBar
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          filter={searchFilter}
-          onFilterChange={setSearchFilter}
-        />
-      </View>
-
       {links.length === 0 ? (
         <View style={styles.empty}>
           <Text style={styles.emptyText}>저장된 링크가 없습니다</Text>

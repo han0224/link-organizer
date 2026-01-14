@@ -1,4 +1,6 @@
 // app/link/[id].tsx
+import { LinkSchema } from "@/storage/link-schema";
+import { deleteLink, getAllLinks } from "@/storage/link-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -10,8 +12,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Link } from "../../types";
-import { deleteLink, getLinks } from "../../utils/storage";
 
 const TYPE_COLORS: Record<string, string> = {
   youtube: "#FF0000",
@@ -32,14 +32,14 @@ const TYPE_LABELS: Record<string, string> = {
 export default function LinkDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const [link, setLink] = useState<Link | null>(null);
+  const [link, setLink] = useState<LinkSchema | null>(null);
 
   useEffect(() => {
     loadLink();
   }, [id]);
 
   const loadLink = async () => {
-    const links = await getLinks();
+    const links = await getAllLinks();
     const found = links.find((l) => l.id === id);
     setLink(found || null);
   };
@@ -52,7 +52,7 @@ export default function LinkDetailScreen() {
 
   const handleEdit = () => {
     router.push({
-      pathname: "/add-link",
+      pathname: "/edit-link",
       params: { editId: link?.id },
     });
   };
@@ -107,7 +107,7 @@ export default function LinkDetailScreen() {
       </TouchableOpacity>
 
       {/* 태그 */}
-      {link.tags.length > 0 && (
+      {link.tags && link.tags.length > 0 && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>태그</Text>
           <View style={styles.tags}>

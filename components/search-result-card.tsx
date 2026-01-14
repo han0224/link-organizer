@@ -122,7 +122,7 @@ export default function SearchResultCard({ result, query, onPress }: Props) {
           {link.url}
         </Text>
 
-        {link.tags.length > 0 && (
+        {link.tags && link.tags.length > 0 && (
           <View style={styles.tags}>
             {link.tags.slice(0, 3).map((tag, i) => {
               const isMatched = matchedTags?.includes(tag);

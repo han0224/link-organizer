@@ -1,5 +1,5 @@
-import { DEFAULT_FOLDER, DEFAULT_FOLDER_NAME } from "@/constants";
-import { createFolder, getFolders } from "@/utils/storage";
+import { FolderSchema } from "@/storage/folder-schema";
+import { createFolder, getAllFolders } from "@/storage/folder-storage";
 import { useEffect, useState } from "react";
 import {
   Modal,
@@ -22,14 +22,14 @@ export default function FolderSelector({
   const [modalVisible, setModalVisible] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [showCreateInput, setShowCreateInput] = useState(false);
-  const [folders, setFolders] = useState<string[]>([]);
+  const [folders, setFolders] = useState<FolderSchema[]>([]);
 
   useEffect(() => {
     loadFolders();
   }, []);
 
   const loadFolders = async () => {
-    const folders = await getFolders();
+    const folders = await getAllFolders();
     setFolders(folders);
   };
 
@@ -37,7 +37,9 @@ export default function FolderSelector({
     if (!newFolderName.trim()) return;
 
     try {
-      await createFolder(newFolderName.trim());
+      await createFolder({
+        name: newFolderName.trim(),
+      });
       await loadFolders();
 
       onSelectFolder(newFolderName.trim());
@@ -49,6 +51,11 @@ export default function FolderSelector({
     }
   };
 
+  const getFolderName = (folderId: string) => {
+    const folder = folders.find((folder) => folder.id === folderId);
+    return folder?.name || "";
+  };
+
   return (
     <>
       <TouchableOpacity
@@ -56,7 +63,9 @@ export default function FolderSelector({
         onPress={() => setModalVisible(true)}
       >
         <Text style={styles.label}>폴더</Text>
-        <Text style={styles.selectedFolder}>{selectedFolder}</Text>
+        <Text style={styles.selectedFolder}>
+          {getFolderName(selectedFolder)}
+        </Text>
         <Text style={styles.arrow}>▼</Text>
       </TouchableOpacity>
 
@@ -110,49 +119,48 @@ export default function FolderSelector({
                   <TouchableOpacity
                     style={[
                       styles.folderItem,
-                      selectedFolder === DEFAULT_FOLDER &&
-                        styles.folderItemSelected,
+                      selectedFolder === "" && styles.folderItemSelected,
                     ]}
                     onPress={() => {
-                      onSelectFolder(DEFAULT_FOLDER);
+                      onSelectFolder("");
                       setModalVisible(false);
                     }}
                   >
                     <Text
                       style={[
                         styles.folderText,
-                        selectedFolder === DEFAULT_FOLDER &&
-                          styles.folderTextSelected,
+                        selectedFolder === "" && styles.folderTextSelected,
                       ]}
                     >
-                      {DEFAULT_FOLDER_NAME}
+                      선택하지 않음
                     </Text>
-                    {selectedFolder === DEFAULT_FOLDER && (
+                    {selectedFolder === "" && (
                       <Text style={styles.checkmark}>✓</Text>
                     )}
                   </TouchableOpacity>
                   {folders.map((folder) => (
                     <TouchableOpacity
-                      key={folder}
+                      key={folder.id}
                       style={[
                         styles.folderItem,
-                        selectedFolder === folder && styles.folderItemSelected,
+                        selectedFolder === folder.id &&
+                          styles.folderItemSelected,
                       ]}
                       onPress={() => {
-                        onSelectFolder(folder);
+                        onSelectFolder(folder.id);
                         setModalVisible(false);
                       }}
                     >
                       <Text
                         style={[
                           styles.folderText,
-                          selectedFolder === folder &&
+                          selectedFolder === folder.id &&
                             styles.folderTextSelected,
                         ]}
                       >
-                        {folder}
+                        {folder.name}
                       </Text>
-                      {selectedFolder === folder && (
+                      {selectedFolder === folder.id && (
                         <Text style={styles.checkmark}>✓</Text>
                       )}
                     </TouchableOpacity>

@@ -1,16 +1,16 @@
 // utils/search.ts
-import { Link } from "../types";
+import { LinkSchema } from "@/storage/link-schema";
 
 export type SearchFilter = "all" | "title" | "tag" | "memo";
 
 export interface SearchResult {
-  link: Link;
+  link: LinkSchema;
   matchedIn: ("title" | "tag" | "memo")[];
   matchedTags?: string[];
 }
 
 export function searchLinks(
-  links: Link[],
+  links: LinkSchema[],
   query: string,
   filter: SearchFilter = "all"
 ): SearchResult[] {
@@ -34,7 +34,7 @@ export function searchLinks(
 }
 
 function matchLink(
-  link: Link,
+  link: LinkSchema,
   query: string,
   filter: SearchFilter
 ): SearchResult {
@@ -51,7 +51,7 @@ function matchLink(
 
   // 태그 검색
   if (filter === "all" || filter === "tag") {
-    link.tags.forEach((tag) => {
+    link.tags?.forEach((tag) => {
       if (tag.toLowerCase().includes(query)) {
         if (!matchedIn.includes("tag")) matchedIn.push("tag");
         matchedTags.push(tag);
@@ -62,7 +62,7 @@ function matchLink(
   // 메모 검색
   if (
     (filter === "all" || filter === "memo") &&
-    link.memo.toLowerCase().includes(query)
+    link.memo?.toLowerCase().includes(query)
   ) {
     matchedIn.push("memo");
   }
@@ -70,16 +70,17 @@ function matchLink(
   return { link, matchedIn, matchedTags };
 }
 
-function searchByTag(links: Link[], tagQuery: string): SearchResult[] {
+function searchByTag(links: LinkSchema[], tagQuery: string): SearchResult[] {
   return links
     .map((link) => {
-      const matchedTags = link.tags.filter((tag) =>
+      const matchedTags = link.tags?.filter((tag) =>
         tag.toLowerCase().includes(tagQuery)
       );
       return {
         link,
-        matchedIn: matchedTags.length > 0 ? ["tag" as const] : [],
-        matchedTags,
+        matchedIn:
+          matchedTags && matchedTags.length > 0 ? ["tag" as const] : [],
+        matchedTags: matchedTags ?? [],
       };
     })
     .filter((result) => result.matchedIn.length > 0);

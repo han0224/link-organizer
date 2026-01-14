@@ -1,10 +1,11 @@
 // app/add-link.tsx
 import FolderSelector from "@/components/folder-selector";
-import { CreateLinkSchema, LinkType } from "@/storage/link-schema";
-import { createLink } from "@/storage/link-storage";
+import { LinkSchema, LinkType } from "@/storage/link-schema";
+import { getAllLinks, updateLink } from "@/storage/link-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,15 +17,12 @@ import "react-native-get-random-values";
 import TagInput from "../components/tag-input";
 import { detectLinkType, fetchLinkMetadata } from "../utils/linkParser";
 
-export default function AddLinkScreen() {
-  const { sharedUrl, editId } = useLocalSearchParams<{
-    sharedUrl?: string;
-    editId?: string; // TODO: 수정은 페이지 하나 새로 추가
-  }>();
+export default function EditLinkScreen() {
+  const { editId } = useLocalSearchParams<{ editId?: string }>();
 
   const router = useRouter();
 
-  const [url, setUrl] = useState(sharedUrl || "");
+  const [url, setUrl] = useState("");
   const [folder, setFolder] = useState("");
   const [title, setTitle] = useState("");
   const [type, setType] = useState<LinkType>("other");
@@ -32,14 +30,13 @@ export default function AddLinkScreen() {
   const [memo, setMemo] = useState("");
   const [loading, setLoading] = useState(false);
   const [thumbnail, setThumbnail] = useState<string | undefined>(undefined);
+  const [currentLink, setCurrentLink] = useState<LinkSchema | null>(null);
   // useEffect 수정
   useEffect(() => {
     if (editId) {
       loadExistingLink();
-    } else if (sharedUrl) {
-      setUrl(sharedUrl);
     }
-  }, [editId, sharedUrl]);
+  }, [editId]);
 
   useEffect(() => {
     if (url) {
@@ -48,17 +45,17 @@ export default function AddLinkScreen() {
   }, [url]);
 
   const loadExistingLink = async () => {
-    // TODO: 수정은 새로운 페이지에서 하도록 수정
-    // const links = await getAllLinks();
-    // const existing = links.find((l) => l.id === editId);
-    // if (existing) {
-    //   setUrl(existing.url);
-    //   setTitle(existing.title);
-    //   setType(existing.type);
-    //   setTags(existing.tags);
-    //   setMemo(existing.memo);
-    //   setThumbnail(existing.thumbnail);
-    // }
+    const links = await getAllLinks();
+    const link = links.find((l) => l.id === editId);
+    setCurrentLink(link || null);
+    if (link) {
+      setUrl(link.url);
+      setTitle(link.title);
+      setType(link.type);
+      setTags(link.tags || []);
+      setMemo(link.memo || "");
+      setThumbnail(link.thumbnail);
+    }
   };
 
   const parseUrl = async (inputUrl: string) => {
@@ -75,7 +72,13 @@ export default function AddLinkScreen() {
 
   // handleSave 수정
   const handleSave = async () => {
-    const link: CreateLinkSchema = {
+    if (!currentLink) {
+      Alert.alert("수정할 링크를 찾을 수 없습니다");
+      return;
+    }
+
+    const link: LinkSchema = {
+      ...currentLink,
       url,
       title,
       type,
@@ -84,7 +87,7 @@ export default function AddLinkScreen() {
       thumbnail,
       folder,
     };
-    await createLink(link);
+    await updateLink(link);
     router.back();
   };
 
@@ -135,7 +138,7 @@ export default function AddLinkScreen() {
       </View>
 
       <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-        <Text style={styles.saveButtonText}>저장</Text>
+        <Text style={styles.saveButtonText}>수정</Text>
       </TouchableOpacity>
     </ScrollView>
   );

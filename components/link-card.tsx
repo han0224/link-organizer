@@ -1,4 +1,5 @@
 // components/LinkCard.tsx
+import { LinkSchema } from "@/storage/link-schema";
 import {
   ImageBackground,
   StyleSheet,
@@ -6,10 +7,9 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Link } from "../types";
 
 interface Props {
-  link: Link;
+  link: LinkSchema;
   onPress: () => void;
 }
 
@@ -39,7 +39,7 @@ export default function LinkCard({ link, onPress }: Props) {
         <Text style={styles.url} numberOfLines={1}>
           {link.url}
         </Text>
-        {link.tags.length > 0 && (
+        {link.tags && link.tags.length > 0 && (
           <View style={styles.tags}>
             {link.tags.map((tag, i) => (
               <View key={i} style={styles.tag}>
