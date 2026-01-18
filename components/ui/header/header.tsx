@@ -32,7 +32,6 @@ interface HeaderProps {
 const SIDEBAR_WIDTH = 300;
 
 export function Header({ title, isSearch = true }: HeaderProps) {
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMenuOpen, toggleMenu] = useToggle();
   const insets = useSafeAreaInsets();
   const [folders, setFolders] = useState<FolderSchema[]>([]);
@@ -91,7 +90,7 @@ export function Header({ title, isSearch = true }: HeaderProps) {
           <Text style={styles.headerTitle}>{title}</Text>
         </View>
 
-        <TouchableOpacity onPress={() => setIsSearchOpen(!isSearchOpen)}>
+        <TouchableOpacity onPress={() => router.push("/search-link")}>
           <Icon name="search" />
         </TouchableOpacity>
       </View>

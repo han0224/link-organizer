@@ -146,3 +146,5 @@ const styles = StyleSheet.create({
     marginTop: -2,
   },
 });
+
+// app/index.tsx
