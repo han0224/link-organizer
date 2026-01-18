@@ -31,7 +31,7 @@ export default function TabScreen() {
     <View style={styles.container}>
       {/* 헤더 추가 */}
       <Header title={folder?.name || ""} />
-      <LinkList links={links} />
+      <LinkList links={links} onLinkDeleted={loadLinks} />
     </View>
   );
   // return <LinkList links={links} />;

@@ -13,6 +13,7 @@ import type { IconName } from "../icon/icons";
 export function HeaderMenuItem({
   name,
   icon,
+  iconColor,
   onPress,
   style,
   textStyle,
@@ -22,6 +23,7 @@ export function HeaderMenuItem({
 }: {
   name: string;
   icon?: IconName;
+  iconColor?: string;
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
@@ -42,11 +44,11 @@ export function HeaderMenuItem({
       <View>
         {icon && (
           <View style={styles.iconContainer}>
-            <Icon name={icon} size={24} color="#333" />
+            <Icon name={icon} size={24} color={iconColor || "#333"} />
           </View>
         )}
       </View>
-      <Text style={[styles.menuItemText, textStyle, ,]}>{name}</Text>
+      <Text style={[styles.menuItemText, textStyle]}>{name}</Text>
       {count !== undefined && count !== null && (
         <Text style={styles.countText}>{count.toString()}</Text>
       )}

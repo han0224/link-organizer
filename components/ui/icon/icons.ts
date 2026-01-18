@@ -5,6 +5,7 @@ import UpArrowIcon from "../../../assets/svgs/arrow-up.svg";
 import CloseIcon from "../../../assets/svgs/close.svg";
 import CloudIcon from "../../../assets/svgs/cloud.svg";
 import FileIcon from "../../../assets/svgs/file.svg";
+import FolderFilledIcon from "../../../assets/svgs/folder-filled.svg";
 import FolderOpenIcon from "../../../assets/svgs/folder-open.svg";
 import FolderIcon from "../../../assets/svgs/folder.svg";
 import FoldersIcon from "../../../assets/svgs/folders.svg";
@@ -21,6 +22,7 @@ export const ICONS = {
   hamburger: HamburgerIcon,
   file: FileIcon,
   folder: FolderIcon,
+  folderFilled: FolderFilledIcon,
   folderOpen: FolderOpenIcon,
   folders: FoldersIcon,
   search: SearchIcon,

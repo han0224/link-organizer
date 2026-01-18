@@ -35,7 +35,13 @@ async function updateFolderLinks(
 
 export async function getAllLinks(): Promise<LinkSchema[]> {
   const data = await AsyncStorage.getItem(LINKS_KEY);
-  return data ? JSON.parse(data) : [];
+  const links = data ? JSON.parse(data) : [];
+  // 최신순으로 정렬 (createdAt 기준 내림차순)
+  return links.sort((a: LinkSchema, b: LinkSchema) => {
+    const dateA = new Date(a.createdAt).getTime();
+    const dateB = new Date(b.createdAt).getTime();
+    return dateB - dateA; // 내림차순 (최신이 위)
+  });
 }
 
 export async function getLinksByFolderId(
@@ -43,7 +49,13 @@ export async function getLinksByFolderId(
 ): Promise<LinkSchema[]> {
   const links = await getAllLinks();
   console.log("links", links);
-  return links.filter((l) => l.folder === folderId);
+  const filtered = links.filter((l) => l.folder === folderId);
+  // 최신순으로 정렬 (createdAt 기준 내림차순)
+  return filtered.sort((a: LinkSchema, b: LinkSchema) => {
+    const dateA = new Date(a.createdAt).getTime();
+    const dateB = new Date(b.createdAt).getTime();
+    return dateB - dateA; // 내림차순 (최신이 위)
+  });
 }
 
 export async function updateLink(link: LinkSchema): Promise<void> {

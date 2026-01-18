@@ -1,10 +1,17 @@
 // app/link/[id].tsx
+import LinkActionButtons from "@/components/link-action-buttons";
+import LinkFolderInfo from "@/components/link-folder-info";
+import LinkInfoSection from "@/components/link-info-section";
+import LinkTags from "@/components/link-tags";
+import { FolderSchema } from "@/storage/folder-schema";
+import { getFolderById } from "@/storage/folder-storage";
 import { LinkSchema } from "@/storage/link-schema";
 import { deleteLink, getAllLinks } from "@/storage/link-storage";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
 import {
   Alert,
+  Image,
   Linking,
   ScrollView,
   StyleSheet,
@@ -33,15 +40,30 @@ export default function LinkDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const [link, setLink] = useState<LinkSchema | null>(null);
+  const [folder, setFolder] = useState<FolderSchema | null>(null);
 
-  useEffect(() => {
-    loadLink();
-  }, [id]);
+  useFocusEffect(
+    useCallback(() => {
+      loadLink();
+    }, [id])
+  );
 
   const loadLink = async () => {
     const links = await getAllLinks();
     const found = links.find((l) => l.id === id);
     setLink(found || null);
+
+    // 폴더 정보 로드
+    if (found?.folder) {
+      try {
+        const folderData = await getFolderById(found.folder);
+        setFolder(folderData);
+      } catch {
+        setFolder(null);
+      }
+    } else {
+      setFolder(null);
+    }
   };
 
   const handleOpenLink = () => {
@@ -81,16 +103,37 @@ export default function LinkDetailScreen() {
     );
   }
 
-  const formattedDate = new Date(link.createdAt).toLocaleDateString("ko-KR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const formattedCreatedDate = new Date(link.createdAt).toLocaleDateString(
+    "ko-KR",
+    {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }
+  );
+
+  const formattedUpdatedDate = new Date(link.updatedAt).toLocaleDateString(
+    "ko-KR",
+    {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }
+  );
 
   return (
     <ScrollView style={styles.container}>
+      {/* 썸네일 */}
+      {link.thumbnail && (
+        <View style={styles.thumbnailContainer}>
+          <Image source={{ uri: link.thumbnail }} style={styles.thumbnail} />
+        </View>
+      )}
+
       {/* 타입 배지 */}
       <View
         style={[styles.typeBadge, { backgroundColor: TYPE_COLORS[link.type] }]}
@@ -108,49 +151,52 @@ export default function LinkDetailScreen() {
 
       {/* 태그 */}
       {link.tags && link.tags.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>태그</Text>
-          <View style={styles.tags}>
-            {link.tags.map((tag, index) => (
-              <View key={index} style={styles.tag}>
-                <Text style={styles.tagText}>#{tag}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
+        <LinkInfoSection title="태그">
+          <LinkTags tags={link.tags} />
+        </LinkInfoSection>
+      )}
+
+      {/* 폴더 정보 */}
+      {folder && (
+        <LinkInfoSection title="폴더">
+          <LinkFolderInfo folder={folder} />
+        </LinkInfoSection>
       )}
 
       {/* 메모 */}
-      {link.memo ? (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>메모</Text>
+      {link.memo && (
+        <LinkInfoSection title="메모">
           <View style={styles.memoBox}>
             <Text style={styles.memoText}>{link.memo}</Text>
           </View>
-        </View>
-      ) : null}
+        </LinkInfoSection>
+      )}
 
-      {/* 저장 날짜 */}
-      <View style={styles.section}>
-        <Text style={styles.dateText}>저장일: {formattedDate}</Text>
-      </View>
+      {/* 상태 */}
+      <LinkInfoSection title="상태">
+        <Text style={styles.statusText}>
+          {link.status === "active"
+            ? "활성"
+            : link.status === "archived"
+            ? "보관됨"
+            : "삭제됨"}
+        </Text>
+      </LinkInfoSection>
+
+      {/* 날짜 정보 */}
+      <LinkInfoSection title="날짜">
+        <Text style={styles.dateText}>생성일: {formattedCreatedDate}</Text>
+        {formattedCreatedDate !== formattedUpdatedDate && (
+          <Text style={styles.dateText}>수정일: {formattedUpdatedDate}</Text>
+        )}
+      </LinkInfoSection>
 
       {/* 액션 버튼들 */}
-      <View style={styles.actions}>
-        <TouchableOpacity style={styles.openButton} onPress={handleOpenLink}>
-          <Text style={styles.openButtonText}>링크 열기</Text>
-        </TouchableOpacity>
-
-        <View style={styles.secondaryActions}>
-          <TouchableOpacity style={styles.editButton} onPress={handleEdit}>
-            <Text style={styles.editButtonText}>수정</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-            <Text style={styles.deleteButtonText}>삭제</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      <LinkActionButtons
+        onOpenLink={handleOpenLink}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+      />
     </ScrollView>
   );
 }
@@ -192,30 +238,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     textDecorationLine: "underline",
   },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#666",
-    marginBottom: 10,
-  },
-  tags: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  tag: {
-    backgroundColor: "#e3f2fd",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  tagText: {
-    color: "#1976D2",
-    fontSize: 14,
-  },
   memoBox: {
     backgroundColor: "#f9f9f9",
     padding: 16,
@@ -232,50 +254,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#999",
   },
-  actions: {
-    marginTop: 20,
-    paddingBottom: 40,
-  },
-  openButton: {
-    backgroundColor: "#007AFF",
-    padding: 16,
-    borderRadius: 10,
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  openButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  secondaryActions: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  editButton: {
-    flex: 1,
+  thumbnailContainer: {
+    width: "100%",
+    height: 200,
+    borderRadius: 12,
+    overflow: "hidden",
+    marginBottom: 20,
     backgroundColor: "#f0f0f0",
-    padding: 14,
-    borderRadius: 10,
-    alignItems: "center",
   },
-  editButtonText: {
-    color: "#333",
+  thumbnail: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
+  statusText: {
     fontSize: 15,
-    fontWeight: "500",
-  },
-  deleteButton: {
-    flex: 1,
-    backgroundColor: "#fff",
-    padding: 14,
-    borderRadius: 10,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#FF3B30",
-  },
-  deleteButtonText: {
-    color: "#FF3B30",
-    fontSize: 15,
-    fontWeight: "500",
+    color: "#666",
   },
 });

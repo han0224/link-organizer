@@ -24,7 +24,7 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <Header title="모든 링크" />
-      <LinkList links={links} />
+      <LinkList links={links} onLinkDeleted={loadLinks} />
     </View>
   );
 }

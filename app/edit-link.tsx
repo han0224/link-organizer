@@ -55,6 +55,7 @@ export default function EditLinkScreen() {
       setTags(link.tags || []);
       setMemo(link.memo || "");
       setThumbnail(link.thumbnail);
+      setFolder(link.folder || "");
     }
   };
 

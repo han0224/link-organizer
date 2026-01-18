@@ -46,9 +46,11 @@ export function Header({ title, isSearch = true }: HeaderProps) {
     }, [])
   );
 
-  const handleMenuPress = () => {
-    // const toValue = isMenuOpen ? -SIDEBAR_WIDTH : 0;
-
+  const handleMenuPress = async () => {
+    // 메뉴를 열 때마다 폴더 목록 새로고침
+    if (!isMenuOpen) {
+      await loadFolders();
+    }
     toggleMenu();
   };
 
@@ -133,18 +135,28 @@ export function Header({ title, isSearch = true }: HeaderProps) {
             <Divider style={{ marginVertical: 10 }} />
             <HeaderMenuItem name="폴더" icon="folders" onPress={() => {}} />
 
-            {folders.map((folder) => (
-              <HeaderMenuItem
-                key={folder.id}
-                name={folder.name}
-                icon="folder"
-                count={folder.links.length}
-                onPress={() => handleClickFolder(folder.id)}
-                isSelected={isSelectedFolder(folder.id)}
-                subFolderIndent
-              />
-            ))}
-            <Button title="폴더 관리" onPress={() => {}} />
+            {folders.map((folder) => {
+              const isSelected = isSelectedFolder(folder.id);
+              return (
+                <HeaderMenuItem
+                  key={folder.id}
+                  name={folder.name}
+                  icon={isSelected ? "folderFilled" : "folder"}
+                  iconColor={folder.color}
+                  count={folder.links.length}
+                  onPress={() => handleClickFolder(folder.id)}
+                  isSelected={isSelected}
+                  subFolderIndent
+                />
+              );
+            })}
+            <Button
+              title="폴더 관리"
+              onPress={() => {
+                toggleMenu();
+                router.push("/setting/folder");
+              }}
+            />
           </ScrollView>
         </TouchableOpacity>
       </Modal>

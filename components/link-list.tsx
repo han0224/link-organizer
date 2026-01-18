@@ -1,21 +1,45 @@
 // app/index.tsx
+import { FolderSchema } from "@/storage/folder-schema";
+import { getAllFolders } from "@/storage/folder-storage";
 import { LinkSchema } from "@/storage/link-schema";
+import { deleteLink } from "@/storage/link-storage";
 import { SearchFilter, searchLinks, SearchResult } from "@/utils/search";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
+  Alert,
   FlatList,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import SearchResultCard from "./search-result-card";
+import SearchResultCard from "./link-card";
 
-export default function LinkList({ links }: { links: LinkSchema[] }) {
+export default function LinkList({
+  links,
+  onLinkDeleted,
+}: {
+  links: LinkSchema[];
+  onLinkDeleted?: () => void;
+}) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFilter, setSearchFilter] = useState<SearchFilter>("all");
+  const [folders, setFolders] = useState<Map<string, FolderSchema>>(new Map());
   const router = useRouter();
+
+  useEffect(() => {
+    loadFolders();
+  }, []);
+
+  const loadFolders = async () => {
+    const folderList = await getAllFolders();
+    const folderMap = new Map<string, FolderSchema>();
+    folderList.forEach((folder) => {
+      folderMap.set(folder.id, folder);
+    });
+    setFolders(folderMap);
+  };
 
   // 검색 결과
   const searchResults: SearchResult[] = searchLinks(
@@ -25,6 +49,25 @@ export default function LinkList({ links }: { links: LinkSchema[] }) {
   );
 
   const isSearching = searchQuery.length > 0;
+
+  const handleDelete = (linkId: string, linkTitle: string) => {
+    Alert.alert("링크 삭제", `"${linkTitle}" 링크를 삭제하시겠습니까?`, [
+      { text: "취소", style: "cancel" },
+      {
+        text: "삭제",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await deleteLink(linkId);
+            // 부모 컴포넌트에 삭제 완료 알림
+            onLinkDeleted?.();
+          } catch (error: any) {
+            Alert.alert("오류", error.message || "링크 삭제에 실패했습니다");
+          }
+        },
+      },
+    ]);
+  };
 
   return (
     <View style={styles.container}>
@@ -52,13 +95,20 @@ export default function LinkList({ links }: { links: LinkSchema[] }) {
           <FlatList
             data={searchResults}
             keyExtractor={(item) => item.link.id}
-            renderItem={({ item }) => (
-              <SearchResultCard
-                result={item}
-                query={searchQuery}
-                onPress={() => router.push(`/link/${item.link.id}`)}
-              />
-            )}
+            renderItem={({ item }) => {
+              const folder = item.link.folder
+                ? folders.get(item.link.folder) || null
+                : null;
+              return (
+                <SearchResultCard
+                  result={item}
+                  query={searchQuery}
+                  onPress={() => router.push(`/link/${item.link.id}`)}
+                  onDelete={() => handleDelete(item.link.id, item.link.title)}
+                  folder={folder}
+                />
+              );
+            }}
             contentContainerStyle={styles.list}
           />
         </>
