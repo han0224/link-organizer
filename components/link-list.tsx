@@ -1,4 +1,5 @@
 // app/index.tsx
+import { BaseColors } from "@/constants/theme";
 import { FolderSchema } from "@/storage/folder-schema";
 import { getAllFolders } from "@/storage/folder-storage";
 import { LinkSchema } from "@/storage/link-schema";
@@ -6,14 +7,7 @@ import { deleteLink } from "@/storage/link-storage";
 import { SearchFilter, searchLinks, SearchResult } from "@/utils/search";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import {
-  Alert,
-  FlatList,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Alert, FlatList, StyleSheet, Text, View } from "react-native";
 import SearchResultCard from "./link-card";
 
 export default function LinkList({
@@ -109,17 +103,18 @@ export default function LinkList({
                 />
               );
             }}
+            ItemSeparatorComponent={() => <View style={styles.separator} />}
             contentContainerStyle={styles.list}
           />
         </>
       )}
 
-      <TouchableOpacity
+      {/* <TouchableOpacity
         style={styles.fab}
         onPress={() => router.push("/add-link")}
       >
         <Text style={styles.fabText}>+</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </View>
   );
 }
@@ -127,7 +122,7 @@ export default function LinkList({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: BaseColors.background,
   },
   header: {
     height: 105,
@@ -151,6 +146,9 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 80,
   },
+  separator: {
+    height: 12,
+  },
   empty: {
     flex: 1,
     justifyContent: "center",
@@ -172,28 +170,6 @@ const styles = StyleSheet.create({
   resultCountText: {
     fontSize: 13,
     color: "#666",
-  },
-  fab: {
-    position: "absolute",
-    right: 20,
-    bottom: 30,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#007AFF",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  fabText: {
-    color: "#fff",
-    fontSize: 32,
-    fontWeight: "300",
-    marginTop: -2,
   },
 });
 

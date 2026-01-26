@@ -1,8 +1,6 @@
 // app/link/[id].tsx
-import LinkActionButtons from "@/components/link-action-buttons";
-import LinkFolderInfo from "@/components/link-folder-info";
-import LinkInfoSection from "@/components/link-info-section";
-import LinkTags from "@/components/link-tags";
+import { Icon } from "@/components/ui";
+import { BaseColors } from "@/constants/theme";
 import { FolderSchema } from "@/storage/folder-schema";
 import { getFolderById } from "@/storage/folder-storage";
 import { LinkSchema } from "@/storage/link-schema";
@@ -19,33 +17,49 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const TYPE_COLORS: Record<string, string> = {
-  youtube: "#FF0000",
-  blog: "#00C853",
-  article: "#2196F3",
-  video: "#9C27B0",
-  other: "#757575",
+const getDomain = (url: string) => {
+  try {
+    const urlObj = new URL(url);
+    return urlObj.hostname.replace("www.", "");
+  } catch {
+    return url;
+  }
 };
 
-const TYPE_LABELS: Record<string, string> = {
-  youtube: "YouTube",
-  blog: "블로그",
-  article: "아티클",
-  video: "영상",
-  other: "기타",
+const formatDate = (date: Date) => {
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+  const month = months[date.getMonth()];
+  const day = date.getDate();
+  const year = date.getFullYear();
+  return `${month} ${day}, ${year}`;
 };
 
 export default function LinkDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [link, setLink] = useState<LinkSchema | null>(null);
   const [folder, setFolder] = useState<FolderSchema | null>(null);
 
   useFocusEffect(
     useCallback(() => {
       loadLink();
-    }, [id])
+    }, [id]),
   );
 
   const loadLink = async () => {
@@ -103,172 +117,314 @@ export default function LinkDetailScreen() {
     );
   }
 
-  const formattedCreatedDate = new Date(link.createdAt).toLocaleDateString(
-    "ko-KR",
-    {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }
-  );
-
-  const formattedUpdatedDate = new Date(link.updatedAt).toLocaleDateString(
-    "ko-KR",
-    {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }
-  );
+  const formattedDate = formatDate(new Date(link.createdAt));
 
   return (
-    <ScrollView style={styles.container}>
-      {/* 썸네일 */}
-      {link.thumbnail && (
-        <View style={styles.thumbnailContainer}>
-          <Image source={{ uri: link.thumbnail }} style={styles.thumbnail} />
-        </View>
-      )}
-
-      {/* 타입 배지 */}
+    <View style={styles.container}>
+      {/* 상단 네비게이션 오버레이 */}
       <View
-        style={[styles.typeBadge, { backgroundColor: TYPE_COLORS[link.type] }]}
+        style={[
+          styles.topNav,
+          {
+            paddingTop: 16,
+            // paddingTop: insets.top + 16,
+          },
+        ]}
       >
-        <Text style={styles.typeText}>{TYPE_LABELS[link.type]}</Text>
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => router.back()}
+        >
+          <Icon name="leftArrow" size={20} color={BaseColors.white} />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.navButton}>
+          <Icon name="cloud" size={20} color={BaseColors.white} />
+        </TouchableOpacity>
       </View>
 
-      {/* 제목 */}
-      <Text style={styles.title}>{link.title}</Text>
-
-      {/* URL */}
-      <TouchableOpacity onPress={handleOpenLink}>
-        <Text style={styles.url}>{link.url}</Text>
-      </TouchableOpacity>
-
-      {/* 태그 */}
-      {link.tags && link.tags.length > 0 && (
-        <LinkInfoSection title="태그">
-          <LinkTags tags={link.tags} />
-        </LinkInfoSection>
-      )}
-
-      {/* 폴더 정보 */}
-      {folder && (
-        <LinkInfoSection title="폴더">
-          <LinkFolderInfo folder={folder} />
-        </LinkInfoSection>
-      )}
-
-      {/* 메모 */}
-      {link.memo && (
-        <LinkInfoSection title="메모">
-          <View style={styles.memoBox}>
-            <Text style={styles.memoText}>{link.memo}</Text>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* 헤더 이미지 */}
+        {link.thumbnail && (
+          <View style={styles.heroImageContainer}>
+            <Image source={{ uri: link.thumbnail }} style={styles.heroImage} />
           </View>
-        </LinkInfoSection>
-      )}
-
-      {/* 상태 */}
-      <LinkInfoSection title="상태">
-        <Text style={styles.statusText}>
-          {link.status === "active"
-            ? "활성"
-            : link.status === "archived"
-            ? "보관됨"
-            : "삭제됨"}
-        </Text>
-      </LinkInfoSection>
-
-      {/* 날짜 정보 */}
-      <LinkInfoSection title="날짜">
-        <Text style={styles.dateText}>생성일: {formattedCreatedDate}</Text>
-        {formattedCreatedDate !== formattedUpdatedDate && (
-          <Text style={styles.dateText}>수정일: {formattedUpdatedDate}</Text>
         )}
-      </LinkInfoSection>
 
-      {/* 액션 버튼들 */}
-      <LinkActionButtons
-        onOpenLink={handleOpenLink}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
-    </ScrollView>
+        {/* 제목 & 메타데이터 */}
+        <View style={styles.titleSection}>
+          <Text style={styles.title}>{link.title}</Text>
+          <TouchableOpacity
+            style={styles.urlRow}
+            onPress={handleOpenLink}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.urlText}>{getDomain(link.url)}</Text>
+            <Icon name="rightArrow" size={14} color="#637c83" />
+          </TouchableOpacity>
+        </View>
+
+        {/* 폴더 & 태그 */}
+        {(folder || (link.tags && link.tags.length > 0)) && (
+          <View style={styles.chipsSection}>
+            {folder && (
+              <View style={styles.folderChip}>
+                <Text style={styles.folderChipText}>📁 {folder.name}</Text>
+              </View>
+            )}
+            {link.tags?.map((tag, index) => (
+              <View key={index} style={styles.tagChip}>
+                <Text style={styles.tagChipText}>#{tag}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* 메모 섹션 */}
+        {link.memo && (
+          <View style={styles.memoSection}>
+            <View style={styles.memoHeader}>
+              <Text style={styles.memoTitle}>메모</Text>
+              <Icon name="file" size={18} color={BaseColors.gray[400]} />
+            </View>
+            <View style={styles.memoBox}>
+              <Text style={styles.memoText}>{link.memo}</Text>
+            </View>
+          </View>
+        )}
+
+        {/* 저장 날짜 */}
+        <View style={styles.dateSection}>
+          <Text style={styles.dateText}>Saved on {formattedDate}</Text>
+        </View>
+      </ScrollView>
+
+      {/* 하단 고정 액션 버튼 */}
+      <View style={[styles.bottomBar]}>
+        <View style={styles.bottomActions}>
+          <TouchableOpacity
+            style={styles.openLinkButton}
+            onPress={handleOpenLink}
+          >
+            <Icon name="file" size={20} color={BaseColors.white} />
+            <Text style={styles.openLinkButtonText}>링크 열기</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.editButton} onPress={handleEdit}>
+            <Icon name="file" size={20} color="#121617" />
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: BaseColors.background,
+  },
+  topNav: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    zIndex: 20,
+  },
+  navButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 200,
+  },
+  heroImageContainer: {
+    width: "100%",
+    aspectRatio: 4 / 3,
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  heroImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
+  titleSection: {
+    paddingHorizontal: 20,
+    paddingTop: 32,
+  },
+  title: {
+    fontSize: 30,
+    fontWeight: "800",
+    color: "#121617",
+    lineHeight: 38,
+    marginBottom: 8,
+  },
+  urlRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 8,
+  },
+  urlText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#637c83",
+    textDecorationLine: "underline",
+  },
+  chipsSection: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    paddingHorizontal: 20,
+    paddingTop: 24,
+  },
+  folderChip: {
+    height: 36,
+    paddingHorizontal: 16,
+    borderRadius: 18,
+    backgroundColor: `${BaseColors.primary[500]}1A`,
+    borderWidth: 1,
+    borderColor: `${BaseColors.primary[500]}33`,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  folderChipText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: BaseColors.primary[500],
+  },
+  tagChip: {
+    height: 36,
+    paddingHorizontal: 16,
+    borderRadius: 18,
+    backgroundColor: `${BaseColors.gray[200]}99`,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  tagChipText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#121617",
+  },
+  memoSection: {
+    paddingHorizontal: 20,
+    paddingTop: 40,
+  },
+  memoHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  memoTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#121617",
+  },
+  memoBox: {
+    width: "100%",
+    backgroundColor: BaseColors.white,
     padding: 20,
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 20,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: BaseColors.gray[100],
+  },
+  memoText: {
+    fontSize: 16,
+    fontWeight: "400",
+    color: "#344246",
+    lineHeight: 24,
+  },
+  dateSection: {
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 40,
+  },
+  dateText: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: BaseColors.gray[400],
+    textTransform: "uppercase",
+    letterSpacing: 1,
+  },
+  bottomBar: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: `${BaseColors.background}CC`,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    borderTopWidth: 1,
+    borderTopColor: BaseColors.gray[200],
+    zIndex: 30,
+  },
+  bottomActions: {
+    flexDirection: "row",
+    gap: 12,
+    maxWidth: 400,
+    alignSelf: "center",
+    width: "100%",
+  },
+  openLinkButton: {
+    flex: 1,
+    height: 56,
+    backgroundColor: BaseColors.primary[500],
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    shadowColor: BaseColors.primary[500],
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  openLinkButtonText: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: BaseColors.white,
+  },
+  editButton: {
+    width: 56,
+    height: 56,
+    backgroundColor: BaseColors.white,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: BaseColors.gray[200],
+    justifyContent: "center",
+    alignItems: "center",
   },
   notFound: {
     fontSize: 16,
     color: "#666",
     textAlign: "center",
     marginTop: 40,
-  },
-  typeBadge: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    marginBottom: 16,
-  },
-  typeText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 12,
-    lineHeight: 30,
-  },
-  url: {
-    fontSize: 14,
-    color: "#007AFF",
-    marginBottom: 24,
-    textDecorationLine: "underline",
-  },
-  memoBox: {
-    backgroundColor: "#f9f9f9",
-    padding: 16,
-    borderRadius: 8,
-    borderLeftWidth: 3,
-    borderLeftColor: "#007AFF",
-  },
-  memoText: {
-    fontSize: 15,
-    color: "#333",
-    lineHeight: 22,
-  },
-  dateText: {
-    fontSize: 13,
-    color: "#999",
-  },
-  thumbnailContainer: {
-    width: "100%",
-    height: 200,
-    borderRadius: 12,
-    overflow: "hidden",
-    marginBottom: 20,
-    backgroundColor: "#f0f0f0",
-  },
-  thumbnail: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-  },
-  statusText: {
-    fontSize: 15,
-    color: "#666",
   },
 });

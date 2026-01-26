@@ -1,8 +1,7 @@
 // components/TagInput.tsx
 import { getAllTags } from "@/storage/link-storage";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -13,13 +12,19 @@ import {
 interface Props {
   tags: string[];
   onTagsChange: (tags: string[]) => void;
+  placeholder?: string;
 }
 
-export default function TagInput({ tags, onTagsChange }: Props) {
+export default function TagInput({
+  tags,
+  onTagsChange,
+  placeholder = "태그 입력",
+}: Props) {
   const [input, setInput] = useState("");
   const [allTags, setAllTags] = useState<string[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isFocused, setIsFocused] = useState(false);
+  const inputRef = useRef<TextInput>(null);
 
   // 기존 태그 목록 로드
   useEffect(() => {
@@ -45,11 +50,19 @@ export default function TagInput({ tags, onTagsChange }: Props) {
     }
   }, [input, allTags, tags]);
 
+  // 추천 태그: 이미 존재하는 태그 중 아직 선택하지 않은 것들
+  const recommendedTags = allTags.filter((tag) => !tags.includes(tag));
+
   const addTag = (tag?: string) => {
     const tagToAdd = tag || input.trim();
     if (tagToAdd && !tags.includes(tagToAdd)) {
       onTagsChange([...tags, tagToAdd]);
       setInput("");
+      // 태그 추가 후에도 키보드 유지
+      setTimeout(() => {
+        inputRef.current?.focus();
+        setIsFocused(true);
+      }, 100);
     }
   };
 
@@ -57,32 +70,48 @@ export default function TagInput({ tags, onTagsChange }: Props) {
     onTagsChange(tags.filter((_, i) => i !== index));
   };
 
-  const showSuggestions = isFocused && suggestions.length > 0;
+  const showSuggestions = suggestions.length > 0;
 
   return (
     <View style={styles.container}>
       {/* 입력 영역 */}
       <View style={styles.inputRow}>
         <TextInput
+          ref={inputRef}
           style={styles.input}
           value={input}
           onChangeText={setInput}
-          placeholder="태그 입력"
-          onSubmitEditing={() => addTag()}
+          placeholder={placeholder}
+          placeholderTextColor="#999"
+          onSubmitEditing={() => {
+            addTag();
+            // 키보드 완료 버튼 눌렀을 때도 키보드 유지
+            setTimeout(() => {
+              inputRef.current?.focus();
+            }, 100);
+          }}
+          // blurOnSubmit={false}
+          returnKeyType="done"
           onFocus={() => setIsFocused(true)}
-          onBlur={() => setTimeout(() => setIsFocused(false), 200)}
+          onBlur={() => {
+            // 추천 태그 클릭 시 blur 이벤트가 발생하지만, 포커스를 유지하기 위해 지연
+            setTimeout(() => {
+              // 포커스가 여전히 없으면 isFocused를 false로 설정
+              if (!inputRef.current?.isFocused()) {
+                setIsFocused(false);
+              }
+            }, 300);
+          }}
         />
-        <TouchableOpacity
-          style={[styles.addButton, !input.trim() && styles.addButtonDisabled]}
-          onPress={() => addTag()}
-          disabled={!input.trim()}
-        >
-          <Text style={styles.addButtonText}>추가</Text>
-        </TouchableOpacity>
+        {input.trim() && (
+          <TouchableOpacity style={styles.addButton} onPress={() => addTag()}>
+            <Text style={styles.addButtonText}>추가</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
-      {/* 자동완성 리스트 */}
-      {showSuggestions && (
+      {/* 자동완성 리스트 (입력 중일 때만) */}
+      {/* {showSuggestions && (
         <View style={styles.suggestionsContainer}>
           <Text style={styles.suggestionsTitle}>태그 추천</Text>
           <ScrollView
@@ -102,7 +131,7 @@ export default function TagInput({ tags, onTagsChange }: Props) {
             ))}
           </ScrollView>
         </View>
-      )}
+      )} */}
 
       {/* 선택된 태그들 */}
       {tags.length > 0 && (
@@ -119,6 +148,34 @@ export default function TagInput({ tags, onTagsChange }: Props) {
           ))}
         </View>
       )}
+      {/* 추천 태그 (항상 표시) */}
+      {showSuggestions && (
+        <View
+          style={styles.recommendedContainer}
+          onStartShouldSetResponder={() => true}
+        >
+          <Text style={styles.recommendedTitle}>추천 태그</Text>
+          <View style={styles.recommendedTags}>
+            {suggestions.slice(0, 10).map((tag, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.recommendedChip}
+                onPress={() => {
+                  addTag(tag);
+                  // 포커스 유지
+                  setTimeout(() => {
+                    inputRef.current?.focus();
+                  }, 50);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.recommendedPlus}>+</Text>
+                <Text style={styles.recommendedText}>#{tag}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -126,6 +183,7 @@ export default function TagInput({ tags, onTagsChange }: Props) {
 const styles = StyleSheet.create({
   container: {
     gap: 12,
+    flex: 1,
   },
   inputRow: {
     flexDirection: "row",
@@ -133,20 +191,17 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    padding: 12,
     fontSize: 16,
+    color: "#333",
+    padding: 0,
   },
   addButton: {
     backgroundColor: "#007AFF",
-    paddingHorizontal: 16,
-    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
     justifyContent: "center",
-  },
-  addButtonDisabled: {
-    backgroundColor: "#ccc",
+    marginLeft: 8,
   },
   addButtonText: {
     color: "#fff",
@@ -198,5 +253,37 @@ const styles = StyleSheet.create({
   tagRemove: {
     color: "#1976D2",
     fontSize: 12,
+  },
+  recommendedContainer: {
+    marginTop: 8,
+  },
+  recommendedTitle: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 8,
+    fontWeight: "500",
+  },
+  recommendedTags: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  recommendedChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#E3F2FD",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    gap: 4,
+  },
+  recommendedPlus: {
+    fontSize: 14,
+    color: "#1976D2",
+    fontWeight: "600",
+  },
+  recommendedText: {
+    fontSize: 14,
+    color: "#1976D2",
   },
 });

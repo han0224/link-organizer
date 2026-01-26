@@ -27,11 +27,17 @@ import { HeaderMenuItem } from "./header-menu-item";
 interface HeaderProps {
   title: string;
   isSearch?: boolean;
+  cancelable?: boolean;
+  rightAction?: React.ReactNode;
 }
 
 const SIDEBAR_WIDTH = 300;
 
-export function Header({ title, isSearch = true }: HeaderProps) {
+export function Header({
+  title,
+  isSearch = true,
+  cancelable = false,
+}: HeaderProps) {
   const [isMenuOpen, toggleMenu] = useToggle();
   const insets = useSafeAreaInsets();
   const [folders, setFolders] = useState<FolderSchema[]>([]);
@@ -43,15 +49,19 @@ export function Header({ title, isSearch = true }: HeaderProps) {
   useFocusEffect(
     useCallback(() => {
       loadFolders();
-    }, [])
+    }, []),
   );
 
   const handleMenuPress = async () => {
-    // 메뉴를 열 때마다 폴더 목록 새로고침
-    if (!isMenuOpen) {
-      await loadFolders();
+    if (cancelable) {
+      router.back();
+    } else {
+      // 메뉴를 열 때마다 폴더 목록 새로고침
+      if (!isMenuOpen) {
+        await loadFolders();
+      }
+      toggleMenu();
     }
-    toggleMenu();
   };
 
   const loadFolders = async () => {
@@ -87,14 +97,16 @@ export function Header({ title, isSearch = true }: HeaderProps) {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <TouchableOpacity onPress={handleMenuPress}>
-            <Icon name="hamburger" />
+            <Icon name={cancelable ? "close" : "hamburger"} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{title}</Text>
         </View>
+        <Text style={styles.headerTitle}>{title}</Text>
 
-        <TouchableOpacity onPress={() => router.push("/search-link")}>
-          <Icon name="search" />
-        </TouchableOpacity>
+        {isSearch && (
+          <TouchableOpacity onPress={() => router.push("/search-link")}>
+            <Icon name="search" />
+          </TouchableOpacity>
+        )}
       </View>
       {/* Modal로 dim 처리 - SafeArea까지 포함 */}
       <Modal
@@ -154,7 +166,7 @@ export function Header({ title, isSearch = true }: HeaderProps) {
               title="폴더 관리"
               onPress={() => {
                 toggleMenu();
-                router.push("/setting/folder");
+                router.push("/folders");
               }}
             />
           </ScrollView>
@@ -176,7 +188,7 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     backgroundColor: "white",
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: "#e5e7eb",
   },
   headerDark: {
     backgroundColor: "#000", // 검정색

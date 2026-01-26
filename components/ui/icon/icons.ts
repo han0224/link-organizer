@@ -1,3 +1,4 @@
+import AddIcon from "../../../assets/svgs/add.svg";
 import DownArrowIcon from "../../../assets/svgs/arrow-down.svg";
 import LeftArrowIcon from "../../../assets/svgs/arrow-left.svg";
 import RightArrowIcon from "../../../assets/svgs/arrow-right.svg";
@@ -28,6 +29,7 @@ export const ICONS = {
   search: SearchIcon,
   trashFull: TrashFullIcon,
   cloud: CloudIcon,
+  add: AddIcon,
 } as const;
 
 export type IconName = keyof typeof ICONS;

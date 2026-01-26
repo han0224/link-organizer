@@ -1,43 +1,39 @@
-import { Icon } from "@/components/ui";
-import { useToggle } from "@/hooks/useToggle";
+import BottomNavigation from "@/components/bottom-navigation";
+import SearchFilterBar, {
+  SearchFilterType,
+} from "@/components/search-filter-bar";
+import SearchHeader from "@/components/search-header";
+import { BaseColors } from "@/constants/theme";
 import { FolderSchema } from "@/storage/folder-schema";
 import { getAllFolders } from "@/storage/folder-storage";
 import { LinkSchema } from "@/storage/link-schema";
 import { deleteLink, getAllLinks } from "@/storage/link-storage";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   Alert,
-  FlatList,
+  Image,
+  Pressable,
+  ScrollView,
   StyleSheet,
   Text,
-  TextInput,
-  TouchableOpacity,
   View,
 } from "react-native";
-import SearchResultCard from "../components/link-card";
-import { SearchFilter, searchLinks, SearchResult } from "../utils/search";
+import { Icon } from "../components/ui";
+import { searchLinks, SearchResult } from "../utils/search";
 
-const FILTER_OPTIONS: { value: SearchFilter; label: string }[] = [
-  { value: "all", label: "전체" },
-  { value: "title", label: "제목" },
-  { value: "tag", label: "태그" },
-  { value: "memo", label: "메모" },
-];
-
-export default function HomeScreen() {
+export default function SearchScreen() {
   const [links, setLinks] = useState<LinkSchema[]>([]);
+  const [allFolders, setAllFolders] = useState<FolderSchema[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterOpen, filterToggle] = useToggle(true);
-  const [searchFilter, setSearchFilter] = useState<SearchFilter>("all");
-  const [folders, setFolders] = useState<Map<string, FolderSchema>>(new Map());
+  const [searchFilter, setSearchFilter] = useState<SearchFilterType>("all");
   const router = useRouter();
 
   useFocusEffect(
     useCallback(() => {
       loadLinks();
       loadFolders();
-    }, [])
+    }, []),
   );
 
   const loadLinks = async () => {
@@ -47,26 +43,38 @@ export default function HomeScreen() {
 
   const loadFolders = async () => {
     const folderList = await getAllFolders();
-    const folderMap = new Map<string, FolderSchema>();
-    folderList.forEach((folder) => {
-      folderMap.set(folder.id, folder);
-    });
-    setFolders(folderMap);
+    setAllFolders(folderList);
   };
 
-  // 검색 결과
-  const searchResults: SearchResult[] = searchLinks(
-    links,
-    searchQuery,
-    searchFilter
-  );
+  // 링크 검색
+  const searchLinkResults: SearchResult[] = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    if (searchFilter === "folder" || searchFilter === "tag") {
+      // 폴더나 태그 필터일 때는 링크 검색 안 함
+      return [];
+    }
+    return searchLinks(
+      links,
+      searchQuery,
+      searchFilter === "all" ? "all" : "title",
+    );
+  }, [links, searchQuery, searchFilter]);
+
+  // 검색 결과 폴더
+  const searchFolderResults = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    if (searchFilter === "link" || searchFilter === "tag") {
+      return [];
+    }
+    const normalizedQuery = searchQuery.toLowerCase().trim();
+    return allFolders.filter((folder) =>
+      folder.name.toLowerCase().includes(normalizedQuery),
+    );
+  }, [allFolders, searchQuery, searchFilter]);
 
   const isSearching = searchQuery.length > 0;
-  const hasResults = searchResults.length > 0;
-
-  const handleFilterChange = (filter: SearchFilter) => {
-    setSearchFilter(filter);
-  };
+  const hasLinkResults = searchLinkResults.length > 0;
+  const hasFolderResults = searchFolderResults.length > 0;
 
   const handleDelete = (linkId: string, linkTitle: string) => {
     Alert.alert("링크 삭제", `"${linkTitle}" 링크를 삭제하시겠습니까?`, [
@@ -77,7 +85,7 @@ export default function HomeScreen() {
         onPress: async () => {
           try {
             await deleteLink(linkId);
-            await loadLinks(); // 삭제 후 리스트 새로고침
+            await loadLinks();
           } catch (error: any) {
             Alert.alert("오류", error.message || "링크 삭제에 실패했습니다");
           }
@@ -86,116 +94,146 @@ export default function HomeScreen() {
     ]);
   };
 
+  const getDomain = (url: string) => {
+    try {
+      const urlObj = new URL(url);
+      return urlObj.hostname.replace("www.", "");
+    } catch {
+      return url;
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.inputContainer}>
-          <TouchableOpacity onPress={() => router.back()}>
-            <Icon name="leftArrow" />
-          </TouchableOpacity>
-          <TextInput
-            autoFocus
-            style={styles.input}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder="검색어 입력... (#태그로 태그 검색)"
-            placeholderTextColor="#999"
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity
-              onPress={() => setSearchQuery("")}
-              style={styles.clearButton}
+      <SearchHeader
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        onCancel={() => router.back()}
+      />
+      <SearchFilterBar
+        selectedFilter={searchFilter}
+        onFilterChange={setSearchFilter}
+      />
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* 폴더 섹션 */}
+        {isSearching && hasFolderResults && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>폴더</Text>
+              <Pressable onPress={() => router.push("/folders")}>
+                <Text style={styles.viewAllText}>전체 보기</Text>
+              </Pressable>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.folderScroll}
             >
-              <Icon name="close" />
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-      <View style={styles.filterContainer}>
-        <View style={styles.filterHeader}>
-          <Text style={styles.filterHeaderText}>필터</Text>
-          <TouchableOpacity onPress={filterToggle}>
-            <Icon name={filterOpen ? "upArrow" : "downArrow"} />
-          </TouchableOpacity>
-        </View>
-        {filterOpen && (
-          <View style={styles.filterContent}>
-            {FILTER_OPTIONS.map((option) => {
-              const isActive = searchFilter === option.value;
-              return (
-                <TouchableOpacity
-                  key={option.value}
-                  style={[
-                    styles.filterItem,
-                    isActive && styles.filterItemActive,
-                  ]}
-                  onPress={() => handleFilterChange(option.value)}
+              {searchFolderResults.map((folder) => (
+                <Pressable
+                  key={folder.id}
+                  style={styles.folderCard}
+                  onPress={() => router.push(`/folder/${folder.id}`)}
                 >
-                  <Text
+                  <View
                     style={[
-                      styles.filterItemText,
-                      isActive && styles.filterItemTextActive,
+                      styles.folderIconContainer,
+                      {
+                        backgroundColor: `${
+                          folder.color || BaseColors.primary[500]
+                        }1A`,
+                      },
                     ]}
                   >
-                    {option.label}
+                    <Icon
+                      name="folder"
+                      size={24}
+                      color={folder.color || BaseColors.primary[500]}
+                    />
+                  </View>
+                  <Text style={styles.folderName} numberOfLines={1}>
+                    {folder.name}
                   </Text>
-                </TouchableOpacity>
-              );
-            })}
+                  <Text style={styles.folderCount}>
+                    {folder.links.length}개 링크
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
           </View>
         )}
-      </View>
-      {!isSearching && links.length === 0 ? (
-        <View style={styles.empty}>
-          <Text style={styles.emptyText}>저장된 링크가 없습니다</Text>
-          <Text style={styles.emptySubtext}>
-            + 버튼을 눌러 링크를 추가하세요
-          </Text>
-        </View>
-      ) : isSearching && !hasResults ? (
-        <View style={styles.empty}>
-          <Text style={styles.emptyText}>검색 결과가 없습니다</Text>
-          <Text style={styles.emptySubtext}>다른 검색어를 입력해보세요</Text>
-        </View>
-      ) : (
-        <>
-          {isSearching && hasResults && (
-            <View style={styles.resultCount}>
-              <Text style={styles.resultCountText}>
-                {searchResults.length}개의 결과
-              </Text>
-            </View>
-          )}
-          <FlatList
-            data={searchResults}
-            keyExtractor={(item) => item.link.id}
-            renderItem={({ item }) => {
-              const folder = item.link.folder
-                ? folders.get(item.link.folder) || null
-                : null;
-              return (
-                <SearchResultCard
-                  result={item}
-                  query={searchQuery}
-                  onPress={() => router.push(`/link/${item.link.id}`)}
-                  onDelete={() => handleDelete(item.link.id, item.link.title)}
-                  folder={folder}
-                />
-              );
-            }}
-            contentContainerStyle={styles.list}
-          />
-        </>
-      )}
 
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => router.push("/add-link")}
-      >
-        <Text style={styles.fabText}>+</Text>
-      </TouchableOpacity>
+        {/* 링크 섹션 */}
+        {isSearching && hasLinkResults && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>링크</Text>
+            </View>
+            <View style={styles.linksContainer}>
+              {searchLinkResults.map((result) => {
+                const folder = result.link.folder
+                  ? allFolders.find((f) => f.id === result.link.folder) || null
+                  : null;
+                return (
+                  <Pressable
+                    key={result.link.id}
+                    style={styles.linkCard}
+                    onPress={() => router.push(`/link/${result.link.id}`)}
+                  >
+                    {result.link.thumbnail ? (
+                      <Image
+                        source={{ uri: result.link.thumbnail }}
+                        style={styles.thumbnail}
+                      />
+                    ) : (
+                      <View style={styles.thumbnailPlaceholder}>
+                        <Icon
+                          name="file"
+                          size={24}
+                          color={BaseColors.gray[400]}
+                        />
+                      </View>
+                    )}
+                    <View style={styles.linkContent}>
+                      <Text style={styles.linkTitle} numberOfLines={2}>
+                        {result.link.title}
+                      </Text>
+                      <Text style={styles.linkDomain} numberOfLines={1}>
+                        {getDomain(result.link.url)}
+                      </Text>
+                      {folder && (
+                        <View style={styles.linkFolderInfo}>
+                          <Icon
+                            name="folder"
+                            size={14}
+                            color={BaseColors.primary[500]}
+                          />
+                          <Text style={styles.linkFolderName}>
+                            {folder.name.toUpperCase()}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        )}
+
+        {/* 빈 상태 */}
+        {isSearching && !hasLinkResults && !hasFolderResults && (
+          <View style={styles.empty}>
+            <Text style={styles.emptyText}>검색 결과가 없습니다</Text>
+            <Text style={styles.emptySubtext}>다른 검색어를 입력해보세요</Text>
+          </View>
+        )}
+      </ScrollView>
+      <BottomNavigation />
     </View>
   );
 }
@@ -203,129 +241,150 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: BaseColors.background,
   },
-  header: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 8,
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 4,
+  scrollView: {
+    height: "100%",
+    // backgroundColor: "red",
   },
-  inputContainer: {
+  scrollContent: {
+    paddingBottom: 100,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    paddingHorizontal: 12,
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    color: BaseColors.gray[500],
+  },
+  viewAllText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: BaseColors.primary[500],
+  },
+  folderScroll: {
+    paddingHorizontal: 16,
+    gap: 16,
+  },
+  folderCard: {
+    width: 176,
+    backgroundColor: BaseColors.white,
+    padding: 16,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#e0e0e0",
+    borderColor: BaseColors.gray[200],
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 1,
   },
-  input: {
-    flex: 1,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: "#333",
-    marginLeft: 8,
+  folderIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
   },
-  clearButton: {
-    padding: 4,
+  folderName: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#101719",
+    marginBottom: 4,
+    lineHeight: 20,
   },
-  filterContainer: {
+  folderCount: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: BaseColors.gray[400],
+  },
+  linksContainer: {
     paddingHorizontal: 16,
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
+    gap: 12,
   },
-  filterHeader: {
+  linkCard: {
+    flexDirection: "row",
+    gap: 16,
+    padding: 12,
+    backgroundColor: BaseColors.white,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: BaseColors.gray[200],
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  thumbnail: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    backgroundColor: BaseColors.gray[200],
+  },
+  thumbnailPlaceholder: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    backgroundColor: BaseColors.gray[200],
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  linkContent: {
+    flex: 1,
+    justifyContent: "space-between",
+    paddingVertical: 2,
+  },
+  linkTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#101719",
+    lineHeight: 22,
+    marginBottom: 4,
+  },
+  linkDomain: {
+    fontSize: 12,
+    color: BaseColors.gray[400],
+    marginBottom: 4,
+  },
+  linkFolderInfo: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 12,
+    gap: 4,
+    marginTop: 4,
   },
-  filterHeaderText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-  },
-  filterContent: {
-    paddingBottom: 12,
-    flexDirection: "row",
-    gap: 8,
-  },
-  filterItem: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: "#f5f5f5",
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-  },
-  filterItemActive: {
-    backgroundColor: "#007AFF",
-    borderColor: "#007AFF",
-  },
-  filterItemText: {
-    fontSize: 14,
-    color: "#666",
-    fontWeight: "500",
-  },
-  filterItemTextActive: {
-    color: "#fff",
-    fontWeight: "600",
-  },
-  list: {
-    padding: 16,
-    paddingBottom: 80,
+  linkFolderName: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: BaseColors.primary[500],
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   empty: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    paddingVertical: 60,
   },
   emptyText: {
     fontSize: 18,
-    color: "#666",
+    color: BaseColors.gray[600],
+    marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
-    color: "#999",
-    marginTop: 8,
-  },
-  resultCount: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-  },
-  resultCountText: {
-    fontSize: 13,
-    color: "#666",
-  },
-  fab: {
-    position: "absolute",
-    right: 20,
-    bottom: 30,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#007AFF",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  fabText: {
-    color: "#fff",
-    fontSize: 32,
-    fontWeight: "300",
-    marginTop: -2,
+    color: BaseColors.gray[400],
   },
 });

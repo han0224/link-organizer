@@ -56,17 +56,18 @@ export default function FolderSelector({
     return folder?.name || "";
   };
 
+  const displayName = selectedFolder
+    ? getFolderName(selectedFolder) || "선택 안함"
+    : "선택 안함";
+
   return (
     <>
       <TouchableOpacity
         style={styles.selector}
         onPress={() => setModalVisible(true)}
       >
-        <Text style={styles.label}>폴더</Text>
-        <Text style={styles.selectedFolder}>
-          {getFolderName(selectedFolder)}
-        </Text>
-        <Text style={styles.arrow}>▼</Text>
+        <Text style={styles.selectedFolder}>{displayName}</Text>
+        <Text style={styles.arrow}>›</Text>
       </TouchableOpacity>
 
       <Modal
@@ -186,27 +187,18 @@ export default function FolderSelector({
 
 const styles = StyleSheet.create({
   selector: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    padding: 12,
-    backgroundColor: "#fff",
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    marginRight: 12,
-    color: "#333",
+    justifyContent: "flex-end",
   },
   selectedFolder: {
-    flex: 1,
     fontSize: 16,
-    color: "#333",
+    color: "#999",
+    marginRight: 8,
   },
   arrow: {
-    fontSize: 12,
+    fontSize: 18,
     color: "#999",
   },
   modalOverlay: {

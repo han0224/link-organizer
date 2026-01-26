@@ -1,5 +1,6 @@
 // app/add-link.tsx
 import FolderSelector from "@/components/folder-selector";
+import { BaseColors } from "@/constants/theme";
 import { LinkSchema, LinkType } from "@/storage/link-schema";
 import { getAllLinks, updateLink } from "@/storage/link-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -146,7 +147,7 @@ export default function EditLinkScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: "#fff" },
+  container: { flex: 1, padding: 16, backgroundColor: BaseColors.background },
   field: { marginBottom: 20 },
   label: { fontSize: 14, fontWeight: "600", marginBottom: 8, color: "#333" },
   input: {

@@ -1,4 +1,5 @@
 // components/SearchResultCard.tsx
+import { BaseColors } from "@/constants/theme";
 import { FolderSchema } from "@/storage/folder-schema";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Swipeable from "react-native-gesture-handler/ReanimatedSwipeable";
@@ -26,7 +27,7 @@ const MATCH_LABELS: Record<string, string> = {
   memo: "메모",
 };
 
-export default function SearchResultCard({
+export default function LinkCard({
   result,
   query,
   onPress,
@@ -223,24 +224,27 @@ export default function SearchResultCard({
 
 const styles = StyleSheet.create({
   card: {
+    // className="bg-white rounded-2xl p-3 shadow-sm active:shadow-md transition-shadow"
     alignItems: "center",
     flexDirection: "row",
-    backgroundColor: "#fff",
+    backgroundColor: BaseColors.white,
     borderRadius: 12,
     overflow: "hidden",
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    // marginBottom: 12,
+    boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
+    // shadowColor: "#000",
+    // shadowOffset: { width: 0, height: 2 },
+    // shadowOpacity: 0.1,
+    // shadowRadius: 4,
+    // elevation: 3,
     height: 110,
+    padding: 10,
   },
   thumbnailContainer: {
     width: 110,
     height: 80,
     borderRadius: 8,
-    margin: 10,
+    // margin: 10,
     overflow: "hidden",
     backgroundColor: "#f0f0f0",
   },
@@ -263,7 +267,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 6,
+    // marginBottom: 6,
   },
   typeBadge: {
     paddingHorizontal: 6,
@@ -293,7 +297,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 14,
     fontWeight: "600",
-    marginBottom: 4,
+    // marginBottom: 4,
     color: "#333",
     lineHeight: 20,
   },
@@ -304,13 +308,13 @@ const styles = StyleSheet.create({
   url: {
     fontSize: 11,
     color: "#999",
-    marginBottom: 6,
+    // marginBottom: 6,
   },
   metaInfo: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    marginBottom: 4,
+    // marginBottom: 4,
     flexWrap: "wrap",
   },
   folderInfo: {
@@ -363,7 +367,7 @@ const styles = StyleSheet.create({
     color: "#999",
   },
   memoPreview: {
-    marginTop: 6,
+    // marginTop: 6,
   },
   memoText: {
     fontSize: 11,
@@ -372,7 +376,7 @@ const styles = StyleSheet.create({
   deleteAction: {
     justifyContent: "center",
     alignItems: "flex-end",
-    marginBottom: 12,
+    // marginBottom: 12,
     borderRadius: 12,
     overflow: "hidden",
   },
