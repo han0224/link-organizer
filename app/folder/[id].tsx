@@ -1,5 +1,6 @@
 import BottomNavigation from "@/components/bottom-navigation";
 import FloatingButton from "@/components/floating-button";
+import LinkItem from "@/components/link-item";
 import { Icon } from "@/components/ui";
 import { BaseColors } from "@/constants/theme";
 import { FolderSchema } from "@/storage/folder-schema";
@@ -10,7 +11,6 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
   Alert,
-  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -20,20 +20,19 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-// TODO: 상단에 링크, 참여자 삭제 예정
-// TODO: 편집 클릭 후 체크박스
 export default function FolderDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [links, setLinks] = useState<LinkSchema[]>([]);
   const [folder, setFolder] = useState<FolderSchema | null>(null);
-
+  const [editingMode, setEditingMode] = useState(false);
+  const [selectedLinks, setSelectedLinks] = useState<string[]>([]);
   useFocusEffect(
     useCallback(() => {
       loadLinks();
       loadFolder();
-    }, [id]),
+    }, [id])
   );
 
   const loadLinks = async () => {
@@ -49,6 +48,13 @@ export default function FolderDetailScreen() {
       setFolder(folderData);
     } catch {
       setFolder(null);
+    }
+  };
+
+  const handleLongPress = (linkId: string) => {
+    if (!editingMode) {
+      setEditingMode(true);
+      setSelectedLinks([linkId]);
     }
   };
 
@@ -70,12 +76,18 @@ export default function FolderDetailScreen() {
     ]);
   };
 
-  const getDomain = (url: string) => {
-    try {
-      const urlObj = new URL(url);
-      return urlObj.hostname.replace("www.", "");
-    } catch {
-      return url;
+  const handleCheckChange = (linkId: string, checked: boolean) => {
+    const newSelectedLinks = [...selectedLinks];
+    if (checked) {
+      newSelectedLinks.push(linkId);
+    } else {
+      newSelectedLinks.splice(newSelectedLinks.indexOf(linkId), 1);
+    }
+    setSelectedLinks(newSelectedLinks);
+    console.log("handleCheckChange", newSelectedLinks);
+    if (newSelectedLinks.length === 0) {
+      console.log("handleCheckChange", "false");
+      setEditingMode(false);
     }
   };
 
@@ -118,7 +130,7 @@ export default function FolderDetailScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* 통계 카드 */}
-        <View style={styles.statsContainer}>
+        {/* <View style={styles.statsContainer}>
           <View style={styles.statCard}>
             <View style={styles.statHeader}>
               <Icon name="file" size={18} color={BaseColors.primary[500]} />
@@ -133,7 +145,7 @@ export default function FolderDetailScreen() {
             </View>
             <Text style={styles.statValue}>0</Text>
           </View>
-        </View>
+        </View> */}
 
         {/* 정렬/뷰 옵션 */}
         <View style={styles.optionsContainer}>
@@ -154,48 +166,14 @@ export default function FolderDetailScreen() {
             </View>
           ) : (
             links.map((link) => (
-              <Pressable
+              <LinkItem
                 key={link.id}
-                style={styles.linkCard}
-                onPress={() => router.push(`/link/${link.id}`)}
-              >
-                {link.thumbnail ? (
-                  <Image
-                    source={{ uri: link.thumbnail }}
-                    style={styles.linkThumbnail}
-                  />
-                ) : (
-                  <View style={styles.linkThumbnailPlaceholder}>
-                    <Icon name="file" size={24} color={BaseColors.gray[400]} />
-                  </View>
-                )}
-                <View style={styles.linkContent}>
-                  <View style={styles.linkHeader}>
-                    <Text style={styles.linkTitle} numberOfLines={1}>
-                      {link.title}
-                    </Text>
-                    <Pressable
-                      style={styles.moreButton}
-                      onPress={(e) => {
-                        e.stopPropagation();
-                        handleDelete(link.id, link.title);
-                      }}
-                    >
-                      <Icon
-                        name="hamburger"
-                        size={20}
-                        color={BaseColors.gray[400]}
-                      />
-                    </Pressable>
-                  </View>
-                  <Text style={styles.linkDomain}>{getDomain(link.url)}</Text>
-                  {link.memo && (
-                    <Text style={styles.linkDescription} numberOfLines={2}>
-                      {link.memo}
-                    </Text>
-                  )}
-                </View>
-              </Pressable>
+                link={link}
+                isChecked={selectedLinks.includes(link.id)}
+                onLongPress={() => handleLongPress(link.id)}
+                isViewCheckbox={editingMode}
+                onCheckChange={(checked) => handleCheckChange(link.id, checked)}
+              />
             ))
           )}
         </View>
@@ -208,8 +186,62 @@ export default function FolderDetailScreen() {
         style={styles.fab}
       />
 
-      {/* 하단 네비게이션 */}
-      <BottomNavigation />
+      {/* 선택 삭제 하단 바 - 글래스 스타일 */}
+      {editingMode && selectedLinks.length > 0 ? (
+        <View style={[styles.deleteBarOuter, { paddingBottom: insets.bottom }]}>
+          <View style={styles.deleteBarGlass}>
+            <View style={styles.deleteBarTop}>
+              <Text style={styles.selectedCount}>
+                {selectedLinks.length}개 선택됨
+              </Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setEditingMode(false);
+                  setSelectedLinks([]);
+                }}
+              >
+                <Text style={styles.cancelText}>취소</Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={() => {
+                Alert.alert(
+                  "링크 삭제",
+                  `${selectedLinks.length}개의 링크를 삭제하시겠습니까?`,
+                  [
+                    { text: "취소", style: "cancel" },
+                    {
+                      text: "삭제",
+                      style: "destructive",
+                      onPress: async () => {
+                        try {
+                          for (const linkId of selectedLinks) {
+                            await deleteLink(linkId);
+                          }
+                          await loadLinks();
+                          setEditingMode(false);
+                          setSelectedLinks([]);
+                        } catch (error: any) {
+                          Alert.alert(
+                            "오류",
+                            error.message || "링크 삭제에 실패했습니다"
+                          );
+                        }
+                      },
+                    },
+                  ]
+                );
+              }}
+            >
+              <Icon name="trashFull" size={18} color={BaseColors.white} />
+              <Text style={styles.deleteButtonText}>삭제하기</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      ) : (
+        <BottomNavigation />
+      )}
     </View>
   );
 }
@@ -258,6 +290,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   scrollView: {
+    paddingTop: 16,
     flex: 1,
   },
   scrollContent: {
@@ -335,70 +368,6 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     gap: 16,
   },
-  linkCard: {
-    flexDirection: "row",
-    gap: 16,
-    padding: 12,
-    backgroundColor: BaseColors.white,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: BaseColors.gray[100],
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 2,
-  },
-  linkThumbnail: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    backgroundColor: BaseColors.gray[200],
-    borderWidth: 1,
-    borderColor: BaseColors.gray[100],
-  },
-  linkThumbnailPlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    backgroundColor: BaseColors.gray[200],
-    borderWidth: 1,
-    borderColor: BaseColors.gray[100],
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  linkContent: {
-    flex: 1,
-    minWidth: 0,
-  },
-  linkHeader: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    marginBottom: 4,
-  },
-  linkTitle: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#121617",
-    lineHeight: 22,
-    marginRight: 8,
-  },
-  moreButton: {
-    padding: 4,
-  },
-  linkDomain: {
-    fontSize: 12,
-    fontWeight: "500",
-    color: BaseColors.primary[500],
-    marginBottom: 4,
-  },
-  linkDescription: {
-    fontSize: 14,
-    color: BaseColors.gray[500],
-    lineHeight: 20,
-  },
   empty: {
     paddingVertical: 60,
     alignItems: "center",
@@ -415,5 +384,56 @@ const styles = StyleSheet.create({
     color: "#666",
     textAlign: "center",
     marginTop: 40,
+  },
+  deleteBarOuter: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+  },
+  deleteBarGlass: {
+    backgroundColor: "rgba(30, 30, 30, 0.85)",
+    borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    gap: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 24,
+    elevation: 15,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+  },
+  deleteBarTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  selectedCount: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "rgba(255, 255, 255, 0.9)",
+  },
+  cancelText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "rgba(255, 255, 255, 0.6)",
+  },
+  deleteButton: {
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: BaseColors.red[500],
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8,
+  },
+  deleteButtonText: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: BaseColors.white,
   },
 });

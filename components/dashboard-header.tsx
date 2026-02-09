@@ -1,26 +1,48 @@
 import { Icon } from "@/components/ui";
 import { BaseColors } from "@/constants/theme";
 import { useRouter } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useMemo } from "react";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+const GREETING_MESSAGES = [
+  "유용한 링크 저장해보아요",
+  "새 링크 추가해보아요",
+  "링크 정리해보아요",
+  "정보 모아보아요",
+  "링크 저장해보아요",
+  "폴더로 분류해보아요",
+  "태그로 찾아보아요",
+  "링크 관리해보아요",
+];
 
 export default function DashboardHeader() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+
+  // 랜덤으로 문구 선택 (컴포넌트 마운트 시 한 번만)
+  const randomGreeting = useMemo(() => {
+    const randomIndex = Math.floor(Math.random() * GREETING_MESSAGES.length);
+    return GREETING_MESSAGES[randomIndex];
+  }, []);
 
   return (
     <View style={[styles.header]}>
       <View style={styles.topSection}>
         <View style={styles.profileSection}>
           <View style={styles.profileImage}>
-            {/* 프로필 이미지 - 나중에 실제 이미지로 교체 가능 */}
-            <View style={styles.profilePlaceholder} />
+            <Image
+              source={require("@/assets/images/icon.png")}
+              style={styles.profilePlaceholder}
+              resizeMode="cover"
+            />
           </View>
-          <Text style={styles.greeting}>좋은 아침입니다, Elena</Text>
+          <Text style={styles.greeting}>링크 저장 어플</Text>
+          {/* <Text style={styles.greeting}>{randomGreeting}</Text> */}
         </View>
-        <Pressable style={styles.notificationButton}>
+        {/* <Pressable style={styles.notificationButton}>
           <Icon name="hamburger" size={20} color={BaseColors.gray[600]} />
-        </Pressable>
+        </Pressable> */}
       </View>
       <Pressable
         style={styles.searchContainer}
@@ -65,7 +87,6 @@ const styles = StyleSheet.create({
   profilePlaceholder: {
     width: "100%",
     height: "100%",
-    backgroundColor: BaseColors.gray[300],
   },
   greeting: {
     fontSize: 18,

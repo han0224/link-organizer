@@ -127,7 +127,6 @@ export default function LinkDetailScreen() {
           styles.topNav,
           {
             paddingTop: 16,
-            // paddingTop: insets.top + 16,
           },
         ]}
       >
@@ -148,11 +147,11 @@ export default function LinkDetailScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* 헤더 이미지 */}
-        {link.thumbnail && (
-          <View style={styles.heroImageContainer}>
-            <Image source={{ uri: link.thumbnail }} style={styles.heroImage} />
-          </View>
-        )}
+        {/* {link.thumbnail && ( */}
+        <View style={styles.heroImageContainer}>
+          <Image source={{ uri: link.thumbnail }} style={styles.heroImage} />
+        </View>
+        {/* )} */}
 
         {/* 제목 & 메타데이터 */}
         <View style={styles.titleSection}>
@@ -264,6 +263,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   heroImage: {
+    backgroundColor: BaseColors.gray[200],
     width: "100%",
     height: "100%",
     resizeMode: "cover",

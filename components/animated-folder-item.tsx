@@ -1,4 +1,4 @@
-import { Icon } from "@/components/ui";
+import { Checkbox, Icon } from "@/components/ui";
 import { BaseColors } from "@/constants/theme";
 import { FolderSchema } from "@/storage/folder-schema";
 import {
@@ -47,16 +47,7 @@ export default function AnimatedFolderItem({
         ]}
       >
         {editingMode && (
-          <TouchableOpacity style={styles.checkbox} onPress={onToggleSelect}>
-            <View
-              style={[
-                styles.checkboxInner,
-                isSelected && styles.checkboxInnerSelected,
-              ]}
-            >
-              {isSelected && <Text style={styles.checkMarkSmall}>✓</Text>}
-            </View>
-          </TouchableOpacity>
+          <Checkbox checked={isSelected} onChange={onToggleSelect} size="md" />
         )}
         <View
           style={[
@@ -131,31 +122,6 @@ const styles = StyleSheet.create({
   folderItemPressed: {
     opacity: 0.7,
     transform: [{ scale: 0.98 }],
-  },
-  checkbox: {
-    width: 24,
-    height: 24,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  checkboxInner: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
-    borderWidth: 2,
-    borderColor: BaseColors.gray[400],
-    backgroundColor: BaseColors.white,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  checkboxInnerSelected: {
-    backgroundColor: BaseColors.primary[500],
-    borderColor: BaseColors.primary[500],
-  },
-  checkMarkSmall: {
-    fontSize: 14,
-    color: BaseColors.white,
-    fontWeight: "bold",
   },
   folderIconContainer: {
     width: 44,

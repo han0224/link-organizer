@@ -1,16 +1,14 @@
 import { BaseColors } from "@/constants/theme";
 import { LinkSchema } from "@/storage/link-schema";
 import { useRouter } from "expo-router";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
-import { Icon } from "./ui";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import LinkItem from "./link-item";
 
 interface RecentLinksSectionProps {
   links: LinkSchema[];
 }
 
-export default function RecentLinksSection({
-  links,
-}: RecentLinksSectionProps) {
+export default function RecentLinksSection({ links }: RecentLinksSectionProps) {
   const router = useRouter();
 
   // 최대 4개만 표시
@@ -38,7 +36,7 @@ export default function RecentLinksSection({
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>최근 링크</Text>
-        <Pressable onPress={() => router.push("/")}>
+        <Pressable onPress={() => router.push("/link-list")}>
           <Text style={styles.viewAllText}>모두 보기</Text>
         </Pressable>
       </View>
@@ -48,49 +46,7 @@ export default function RecentLinksSection({
             <Text style={styles.emptyText}>링크가 없습니다</Text>
           </View>
         ) : (
-          displayLinks.map((link) => (
-            <View key={link.id} style={styles.linkCard}>
-              <Pressable
-                style={styles.linkCardPressable}
-                onPress={() => router.push(`/link/${link.id}`)}
-              >
-                {link.thumbnail ? (
-                  <Image
-                    source={{ uri: link.thumbnail }}
-                    style={styles.thumbnail}
-                  />
-                ) : (
-                  <View style={styles.thumbnailPlaceholder}>
-                    <Icon name="file" size={20} color={BaseColors.gray[400]} />
-                  </View>
-                )}
-                <View style={styles.linkContent}>
-                  <Text style={styles.linkTitle} numberOfLines={1}>
-                    {link.title}
-                  </Text>
-                  <View style={styles.linkMeta}>
-                    {getFaviconUrl(link.url) ? (
-                      <Image
-                        source={{ uri: getFaviconUrl(link.url)! }}
-                        style={styles.favicon}
-                      />
-                    ) : (
-                      <Icon name="file" size={14} color={BaseColors.gray[400]} />
-                    )}
-                    <Text style={styles.linkDomain} numberOfLines={1}>
-                      {getDomain(link.url)}
-                    </Text>
-                  </View>
-                </View>
-              </Pressable>
-              <Pressable
-                style={styles.moreButton}
-                onPress={() => router.push(`/link/${link.id}`)}
-              >
-                <Icon name="hamburger" size={20} color={BaseColors.gray[400]} />
-              </Pressable>
-            </View>
-          ))
+          displayLinks.map((link) => <LinkItem key={link.id} link={link} />)
         )}
       </View>
     </View>

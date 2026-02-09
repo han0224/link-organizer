@@ -12,9 +12,9 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { name: "홈", icon: "folder", route: "/" },
-  { name: "공유", icon: "cloud", route: "/" }, // TODO: 공유 페이지 추가
+  // { name: "공유", icon: "cloud", route: "/" }, // TODO: 공유 페이지 추가
   { name: "검색", icon: "search", route: "/search-link" },
-  { name: "설정", icon: "hamburger", route: "/setting" },
+  // { name: "설정", icon: "hamburger", route: "/setting" },
 ];
 
 export default function BottomNavigation() {
