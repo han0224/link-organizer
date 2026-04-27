@@ -1,5 +1,5 @@
 // utils/linkParser.ts
-import { LinkType } from "../types";
+import type { LinkType } from "@/storage/link-schema";
 
 export function detectLinkType(url: string): LinkType {
   if (url.includes("youtube.com") || url.includes("youtu.be")) {

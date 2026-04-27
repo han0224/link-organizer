@@ -129,24 +129,6 @@ export default function FolderDetailScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* 통계 카드 */}
-        {/* <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <View style={styles.statHeader}>
-              <Icon name="file" size={18} color={BaseColors.primary[500]} />
-              <Text style={styles.statLabel}>링크</Text>
-            </View>
-            <Text style={styles.statValue}>{links.length}</Text>
-          </View>
-          <View style={styles.statCard}>
-            <View style={styles.statHeader}>
-              <Icon name="cloud" size={18} color={BaseColors.primary[500]} />
-              <Text style={styles.statLabel}>참여자</Text>
-            </View>
-            <Text style={styles.statValue}>0</Text>
-          </View>
-        </View> */}
-
         {/* 정렬/뷰 옵션 */}
         <View style={styles.optionsContainer}>
           <Pressable style={styles.sortButton}>

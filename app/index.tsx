@@ -11,7 +11,7 @@ import { LinkSchema } from "@/storage/link-schema";
 import { getAllLinks } from "@/storage/link-storage";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 export default function HomeScreen() {
   const [links, setLinks] = useState<LinkSchema[]>([]);
@@ -21,7 +21,7 @@ export default function HomeScreen() {
     useCallback(() => {
       loadLinks();
       loadFolders();
-    }, []),
+    }, [])
   );
 
   const loadLinks = async () => {
@@ -37,6 +37,12 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <DashboardHeader />
+      <Pressable
+        style={styles.loginRouteButton}
+        onPress={() => router.push("/auth/login")}
+      >
+        <Text style={styles.loginRouteButtonText}>Google 로그인 테스트</Text>
+      </Pressable>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -45,6 +51,7 @@ export default function HomeScreen() {
         <FolderSection folders={folders} />
         <RecentLinksSection links={links} />
       </ScrollView>
+      {/* <FloatingButton icon="add" onPress={() => router.push("/auth/login")} /> */}
       <FloatingButton
         onPress={() => router.push("/add-link")}
         icon="add"
@@ -62,6 +69,21 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  loginRouteButton: {
+    alignSelf: "flex-end",
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 6,
+    backgroundColor: BaseColors.primary[500],
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  loginRouteButtonText: {
+    color: BaseColors.white,
+    fontSize: 12,
+    fontWeight: "600",
   },
   scrollContent: {
     paddingBottom: 100, // 하단 네비게이션과 FAB을 위한 공간

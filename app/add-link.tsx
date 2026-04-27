@@ -5,7 +5,7 @@ import { createFolder, getAllFolders } from "@/storage/folder-storage";
 import { CreateLinkSchema, LinkType } from "@/storage/link-schema";
 import { createLink } from "@/storage/link-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Image,
   ScrollView,
@@ -51,8 +51,11 @@ export default function AddLinkScreen() {
     }
   }, [editId, sharedUrl]);
 
+  const hasParsedRef = useRef(false);
+
   useEffect(() => {
-    if (url) {
+    if (url && !hasParsedRef.current) {
+      hasParsedRef.current = true;
       parseUrl(url);
     }
   }, [url]);
@@ -99,7 +102,12 @@ export default function AddLinkScreen() {
       folder,
     };
     await createLink(link);
-    router.back();
+    // 뒤로 갈 수 있으면 뒤로, 없으면 홈으로
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/");
+    }
   };
 
   const handlePaste = async () => {
@@ -130,7 +138,7 @@ export default function AddLinkScreen() {
       // 새로 생성된 폴더 찾기
       const updatedFolders = await getAllFolders();
       const newFolder = updatedFolders.find(
-        (f) => f.name === newFolderName.trim(),
+        (f) => f.name === newFolderName.trim()
       );
       if (newFolder) {
         setFolder(newFolder.id);
@@ -165,7 +173,16 @@ export default function AddLinkScreen() {
       {/* 헤더 */}
       <View style={[styles.header, { paddingTop: insets.top }]}>
         <View style={styles.headerTop}>
-          <TouchableOpacity onPress={() => router.back()}>
+          <TouchableOpacity
+            onPress={() => {
+              // 뒤로 갈 수 있으면 뒤로, 없으면 홈으로
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace("/");
+              }
+            }}
+          >
             <Icon name="close" size={24} color={BaseColors.gray[400]} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>새 링크 추가</Text>
@@ -275,7 +292,7 @@ export default function AddLinkScreen() {
               onPress={() => setShowNewFolderInput(!showNewFolderInput)}
             >
               <Icon name="add" size={16} color={BaseColors.gray[400]} />
-              <Text style={styles.newFolderButtonText}>+ 새 폴더 만들기</Text>
+              <Text style={styles.newFolderButtonText}>새 폴더 만들기</Text>
             </TouchableOpacity>
           </View>
           {showNewFolderInput && (

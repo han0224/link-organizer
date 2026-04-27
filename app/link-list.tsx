@@ -16,7 +16,7 @@ export default function LinkListScreen() {
   useFocusEffect(
     useCallback(() => {
       loadLinks();
-    }, []),
+    }, [])
   );
 
   const loadLinks = async () => {
