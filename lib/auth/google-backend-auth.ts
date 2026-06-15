@@ -6,16 +6,16 @@ export type GoogleAuthSuccessResponse = {
 };
 
 /**
- * POST /api/auth/google — Spring에서 idToken 검증 후 JWT 발급.
+ * POST /api/auth/google?idToken=… — Spring에서 idToken 검증 후 JWT 발급.
  */
 export async function exchangeGoogleIdTokenForJwt(
   idToken: string
 ): Promise<GoogleAuthSuccessResponse> {
-  const url = apiUrl("/api/auth/google");
-  const res = await fetch(url, {
+  const url = new URL(apiUrl("/auth/google"));
+  url.searchParams.set("idToken", idToken);
+  const res = await fetch(url.toString(), {
     method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({ idToken }),
+    headers: { Accept: "application/json" },
   });
 
   const text = await res.text();

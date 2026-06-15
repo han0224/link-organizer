@@ -12,6 +12,7 @@ export interface LinkSchema {
   createdAt: Date; // 생성일
   updatedAt: Date; // 수정일
   folder?: string; // 폴더 ID
+  groupId?: string; // 그룹 ID
   status: LinkStatus; // 폴더 상태
 }
 
@@ -23,4 +24,5 @@ export interface CreateLinkSchema {
   tags?: string[];
   thumbnail?: string;
   folder?: string; // 폴더 ID
+  groupId?: string; // 그룹 ID
 }

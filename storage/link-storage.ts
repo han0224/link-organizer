@@ -58,6 +58,16 @@ export async function getLinksByFolderId(
   });
 }
 
+export async function getLinksByGroupId(groupId: string): Promise<LinkSchema[]> {
+  const links = await getAllLinks();
+  const filtered = links.filter((link) => link.groupId === groupId);
+  return filtered.sort((a: LinkSchema, b: LinkSchema) => {
+    const dateA = new Date(a.createdAt).getTime();
+    const dateB = new Date(b.createdAt).getTime();
+    return dateB - dateA;
+  });
+}
+
 export async function updateLink(link: LinkSchema): Promise<void> {
   const links = await getAllLinks();
   const index = links.findIndex((l) => l.id === link.id);

@@ -21,9 +21,11 @@ import { Icon } from "../components/ui";
 import { detectLinkType, fetchLinkMetadata } from "../utils/linkParser";
 
 export default function AddLinkScreen() {
-  const { sharedUrl, editId } = useLocalSearchParams<{
+  const { sharedUrl, editId, group, groupName } = useLocalSearchParams<{
     sharedUrl?: string;
     editId?: string; // TODO: 수정은 페이지 하나 새로 추가
+    group?: string;
+    groupName?: string;
   }>();
 
   const router = useRouter();
@@ -41,6 +43,7 @@ export default function AddLinkScreen() {
   const [showNewFolderInput, setShowNewFolderInput] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const insets = useSafeAreaInsets();
+  const hasTargetGroup = typeof group === "string" && group.length > 0;
   // useEffect 수정
   useEffect(() => {
     loadFolders();
@@ -100,6 +103,7 @@ export default function AddLinkScreen() {
       memo,
       thumbnail,
       folder,
+      groupId: hasTargetGroup ? group : undefined,
     };
     await createLink(link);
     // 뒤로 갈 수 있으면 뒤로, 없으면 홈으로
@@ -241,6 +245,20 @@ export default function AddLinkScreen() {
         )}
 
         {/* 폴더 선택 섹션 */}
+        {hasTargetGroup && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>저장 대상 그룹</Text>
+            <View style={styles.groupTargetCard}>
+              <Text style={styles.groupTargetTitle}>
+                {groupName || "선택된 그룹"}
+              </Text>
+              <Text style={styles.groupTargetText}>
+                이 링크는 그룹 멤버와 함께 보는 링크로 저장됩니다.
+              </Text>
+            </View>
+          </View>
+        )}
+
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>폴더 선택</Text>
@@ -348,6 +366,25 @@ export default function AddLinkScreen() {
             </View>
           )}
         </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>메모</Text>
+          <TextInput
+            style={styles.memoInput}
+            value={memo}
+            onChangeText={setMemo}
+            placeholder="링크와 함께 남길 메모를 적어보세요"
+            placeholderTextColor={BaseColors.gray[400]}
+            multiline
+            textAlignVertical="top"
+          />
+        </View>
+
+        {loading && (
+          <View style={styles.loadingHint}>
+            <Text style={styles.loadingHintText}>링크 정보를 읽어오는 중...</Text>
+          </View>
+        )}
       </ScrollView>
 
       {/* 하단 고정 저장 버튼 */}
@@ -504,6 +541,24 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: BaseColors.gray[500],
   },
+  groupTargetCard: {
+    backgroundColor: BaseColors.white,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: BaseColors.gray[100],
+    padding: 16,
+    gap: 6,
+  },
+  groupTargetTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#121617",
+  },
+  groupTargetText: {
+    fontSize: 13,
+    lineHeight: 20,
+    color: BaseColors.gray[500],
+  },
   folderButtons: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -564,6 +619,29 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: `${BaseColors.primary[500]}4D`,
     paddingHorizontal: 12,
+  },
+  memoInput: {
+    minHeight: 120,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: BaseColors.gray[100],
+    backgroundColor: BaseColors.white,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    fontSize: 14,
+    color: "#121617",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  loadingHint: {
+    paddingHorizontal: 4,
+  },
+  loadingHintText: {
+    fontSize: 13,
+    color: BaseColors.gray[500],
   },
   newFolderInput: {
     flex: 1,

@@ -120,6 +120,9 @@ export default function RootLayout() {
             <Stack.Screen name="link/[id]" />
             <Stack.Screen name="folders" />
             <Stack.Screen name="folder/[id]" />
+            <Stack.Screen name="groups" />
+            <Stack.Screen name="group/[id]" />
+            <Stack.Screen name="group-settings" />
             <Stack.Screen name="setting/index" />
             <Stack.Screen name="auth/login" />
           </Stack>

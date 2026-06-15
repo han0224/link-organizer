@@ -1,18 +1,18 @@
 import { BaseColors } from "@/constants/theme";
 import { usePathname, useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "./ui";
 
 interface NavItem {
   name: string;
   icon: "folder" | "folderFilled" | "cloud" | "search" | "hamburger";
   route: string;
+  activePrefixes?: string[];
 }
 
 const navItems: NavItem[] = [
   { name: "홈", icon: "folder", route: "/" },
-  // { name: "공유", icon: "cloud", route: "/" }, // TODO: 공유 페이지 추가
+  { name: "그룹", icon: "cloud", route: "/groups", activePrefixes: ["/groups", "/group", "/group-settings"] },
   { name: "검색", icon: "search", route: "/search-link" },
   // { name: "설정", icon: "hamburger", route: "/setting" },
 ];
@@ -20,7 +20,6 @@ const navItems: NavItem[] = [
 export default function BottomNavigation() {
   const router = useRouter();
   const pathname = usePathname();
-  const insets = useSafeAreaInsets();
 
   // 경로 정규화 함수 (/, /index, /index/ 등을 동일하게 처리)
   const normalizePath = (path: string) => {
@@ -46,7 +45,12 @@ export default function BottomNavigation() {
     <View style={[styles.nav]}>
       {navItems.map((item) => {
         const normalizedRoute = normalizePath(item.route);
-        const isActive = normalizedPathname === normalizedRoute;
+        const isActive =
+          normalizedPathname === normalizedRoute ||
+          item.activePrefixes?.some((prefix) =>
+            normalizedPathname.startsWith(prefix),
+          ) ||
+          false;
         const iconName =
           isActive && item.icon === "folder" ? "folderFilled" : item.icon;
         return (

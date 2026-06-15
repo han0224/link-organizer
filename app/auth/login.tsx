@@ -133,10 +133,22 @@ export default function LoginScreen() {
         setLoginMessage("서버에 로그인 중...");
         const { accessToken, refreshToken } =
           await exchangeGoogleIdTokenForJwt(idToken);
+        console.log("[login] 저장할 토큰", {
+          accessToken,
+          refreshToken,
+        });
         await AsyncStorage.multiSet([
           [AUTH_ACCESS_TOKEN_KEY, accessToken],
           [AUTH_REFRESH_TOKEN_KEY, refreshToken],
         ]);
+        const storedTokens = await AsyncStorage.multiGet([
+          AUTH_ACCESS_TOKEN_KEY,
+          AUTH_REFRESH_TOKEN_KEY,
+        ]);
+        console.log("[login] 저장 후 AsyncStorage 토큰", {
+          accessToken: storedTokens[0]?.[1] ?? null,
+          refreshToken: storedTokens[1]?.[1] ?? null,
+        });
         setLoginMessage("로그인 성공");
         router.replace("/");
       } catch (e) {
